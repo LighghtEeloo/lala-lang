@@ -1,0 +1,30 @@
+use crate::ast;
+use std::str::FromStr;
+
+grammar;
+
+pub Binding: ast::Binding = {
+    <b:Binder>  "=" <blk:Block> => ast::Binding { name: b, masked: true , expose: vec![], block: blk },
+    <b:Binder> ":=" <blk:Block> => ast::Binding { name: b, masked: false, expose: vec![], block: blk },
+};
+
+pub BindingVec: Vec<ast::Binding> = {
+    <b:Binding> ";" <bs:BindingVec> => {
+        let mut bs = bs;
+        bs.push(b);
+        bs
+    },
+    <Binding> => vec![<>],
+    "" => vec![],
+};
+
+pub Block: ast::Block = {
+    "[" "]" => ast::Block { bindings: vec![] },
+    "[" <BindingVec> "]" => ast::Block { bindings: <> },
+    "[" <Block> "]",
+};
+
+pub Binder: String = r"[a-zA-Z][0-9a-zA-Z]*'*" => String::from(<>);
+// pub Binder: String = r"[a-z|A-Z][0-9|a-z|A-Z]+" => String::from(<>);
+
+// INTCONST: i32 = r"[0-9]+" => i32::from_str(<>).unwrap();
