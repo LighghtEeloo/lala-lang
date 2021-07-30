@@ -110,6 +110,18 @@ data := [
 ]
 ```
 
+```lala
+data := [
+    shallow : [ deeper; other ] = [
+        deeper := []
+        other  := []
+        darker := []
+    ]
+    deep := deeper
+    another := other
+]
+```
+
 To strictly protect a field, one can refuse to "define" what's inside:
 
 ```lala

@@ -1,30 +1,57 @@
 use crate::ast;
-use std::str::FromStr;
+// use std::str::FromStr;
 
 grammar;
 
+pub Binder: ast::Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => ast::Binder::from(<>);
+
 pub Binding: ast::Binding = {
-    <b:Binder>  "=" <blk:Block> => ast::Binding { name: b, masked: true , expose: vec![], block: blk },
-    <b:Binder> ":=" <blk:Block> => ast::Binding { name: b, masked: false, expose: vec![], block: blk },
+    <b:Binder> <bm:BindingMask> <blk:Block> => ast::Binding { name: b, expose: bm, block: blk },
+};
+
+pub BindingMask: Option<Vec<ast::Binder>> = {
+    <m:(":" Mask?)?> "=" => match m {
+        Some((_,Some(m))) => Some(m),
+        Some((_,None)) => Some(vec![]),
+        None    => None,
+    },
+};
+
+pub Mask : Vec<ast::Binder> = {
+    "[" "*"? "]" => vec![],
+    "[" <mut mbs:MaskBinderVec> "]" => {
+        mbs.reverse();
+        mbs
+    }
+};
+
+pub MaskBinderVec : Vec<ast::Binder> = {
+    <b:Binder> ";" <mut bs:MaskBinderVec> => {
+        bs.push(b);
+        bs
+    },
+    <Binder> => vec![<>],
 };
 
 pub BindingVec: Vec<ast::Binding> = {
-    <b:Binding> ";" <bs:BindingVec> => {
-        let mut bs = bs;
+    <b:Binding> ";" <mut bs:BindingVec> => {
         bs.push(b);
         bs
     },
     <Binding> => vec![<>],
-    "" => vec![],
 };
 
 pub Block: ast::Block = {
     "[" "]" => ast::Block { bindings: vec![] },
-    "[" <BindingVec> "]" => ast::Block { bindings: <> },
+    "[" <mut bs:BindingVec> "]" => {
+        ast::Block { 
+            bindings: {
+                bs.reverse();
+                bs
+            } 
+        }
+    },
     "[" <Block> "]",
 };
-
-pub Binder: String = r"[a-zA-Z][0-9a-zA-Z]*'*" => String::from(<>);
-// pub Binder: String = r"[a-z|A-Z][0-9|a-z|A-Z]+" => String::from(<>);
 
 // INTCONST: i32 = r"[0-9]+" => i32::from_str(<>).unwrap();

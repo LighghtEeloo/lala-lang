@@ -2,8 +2,7 @@ pub type Binder = String;
 
 pub struct Binding {
     pub name: Binder,
-    pub masked: bool,
-    pub expose: Vec<Binder>,
+    pub expose: Option<Vec<Binder>>,
     pub block: Block
 }
 
