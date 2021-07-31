@@ -27,7 +27,15 @@ pub Block: Block = {
 
 // Identifiers
 
-Binder: Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => <>.into();
+Binder: Binder = {
+    <IDENT> => Binder::Identity(<>),
+    <UIDENT> => Binder::Anonymous(<>),
+    <UNDERSCORE> => Binder::Arbitrary
+};
+
+IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+UIDENT: String = r"_+[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+UNDERSCORE: String = "_" => <>.into();
 
 // Const
 

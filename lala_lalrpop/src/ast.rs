@@ -1,4 +1,9 @@
-pub type Binder = String;
+#[derive(Debug)]
+pub enum Binder {
+    Identity(String),
+    Anonymous(String),
+    Arbitrary
+}
 
 #[derive(Debug)]
 pub struct Binding {
