@@ -3,56 +3,44 @@ use crate::ast;
 
 grammar;
 
-pub Binder: ast::Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => ast::Binder::from(<>);
-
 pub Binding: ast::Binding = {
-    <b:Binder> <bm:BindingMask> <blk:Block> => ast::Binding::from((b, bm, blk)),
+    <b:Binder> <bm:BindingMask> <blk:Block> => (b, bm, blk).into(),
 };
 
 pub BindingMask: ast::Mask = {
     <m:(":" Mask?)?> "=" => match m {
         Some((_,Some(m))) => m,
-        Some((_,None)) => ast::Mask::Exposed { binders: vec![] },
-        None    => ast::Mask::Closed,
+        Some((_,None))    => ast::Mask::Exposed { binders: vec![] },
+        None              => ast::Mask::Closed,
     },
 };
 
-pub Mask : ast::Mask = {
-    "[" "]" => ast::Mask::Exposed { binders: vec![] },
+Mask: ast::Mask = {
     "[" "*" "]" => ast::Mask::All,
-    "[" <mut mbs:MaskBinderVec> "]" => {
-        mbs.reverse();
-        ast::Mask::Exposed { binders: mbs }
-    }
-};
-
-pub MaskBinderVec : Vec<ast::Binder> = {
-    <b:Binder> ";" <mut bs:MaskBinderVec> => {
-        bs.push(b);
-        bs
-    },
-    <Binder> => vec![<>],
-};
-
-pub BindingVec: Vec<ast::Binding> = {
-    <b:Binding> ";" <mut bs:BindingVec> => {
-        bs.push(b);
-        bs
-    },
-    <Binding> => vec![<>],
+    "[" <binders: SemiColon<Binder>> "]" => ast::Mask::Exposed { binders },
 };
 
 pub Block: ast::Block = {
-    "[" "]" => ast::Block { bindings: vec![] },
-    "[" <mut bs:BindingVec> "]" => {
-        ast::Block { 
-            bindings: {
-                bs.reverse();
-                bs
-            } 
-        }
-    },
+    "[" <SemiColon<Binding>> "]" => <>.into(),
     "[" <Block> "]",
 };
 
+// Identifiers
+
+Binder: ast::Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => <>.into();
+
+// Const
+
 // INTCONST: i32 = r"[0-9]+" => i32::from_str(<>).unwrap();
+
+// Utility
+
+SemiColon<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
