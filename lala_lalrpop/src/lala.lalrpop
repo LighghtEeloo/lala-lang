@@ -1,33 +1,33 @@
-use crate::ast;
+use crate::ast::*;
 // use std::str::FromStr;
 
 grammar;
 
-pub Binding: ast::Binding = {
+pub Binding: Binding = {
     <b:Binder> <bm:BindingMask> <blk:Block> => (b, bm, blk).into(),
 };
 
-pub BindingMask: ast::Mask = {
+pub BindingMask: Mask = {
     <m:(":" Mask?)?> "=" => match m {
         Some((_,Some(m))) => m,
-        Some((_,None))    => ast::Mask::Exposed { binders: vec![] },
-        None              => ast::Mask::Closed,
+        Some((_,None))    => Mask::Exposed { binders: vec![] },
+        None              => Mask::Closed,
     },
 };
 
-Mask: ast::Mask = {
-    "[" "*" "]" => ast::Mask::All,
-    "[" <binders: SemiColon<Binder>> "]" => ast::Mask::Exposed { binders },
+Mask: Mask = {
+    "[" "*" "]" => Mask::All,
+    "[" <binders: SemiColon<Binder>> "]" => Mask::Exposed { binders },
 };
 
-pub Block: ast::Block = {
+pub Block: Block = {
     "[" <SemiColon<Binding>> "]" => <>.into(),
     "[" <Block> "]",
 };
 
 // Identifiers
 
-Binder: ast::Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => <>.into();
+Binder: Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => <>.into();
 
 // Const
 
