@@ -28,5 +28,6 @@ mod tests {
         assert!(lala::BlockParser::new().parse("[[a = [] ;b =[]]]").is_ok());
 
         assert!(lala::BindingParser::new().parse("a:=[b=[];c:=[d:=[]]]").is_ok());
+        assert!(lala::BindingParser::new().parse("a:[*]=[b=[];c:[d;e]=[d:=[];e:=[]]]").is_ok());
     }
 }
