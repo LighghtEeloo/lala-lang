@@ -9,5 +9,6 @@ build = "build.rs"
 lalrpop = "0.19"
 
 [dependencies]
+anyhow = "1"
 lalrpop-util = "0.19"
 regex = "1"
