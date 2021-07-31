@@ -10,14 +10,14 @@ pub Binding: Binding = {
 pub BindingMask: Mask = {
     <m:(":" Mask?)?> "=" => match m {
         Some((_,Some(m))) => m,
-        Some((_,None))    => Mask::Exposed { binders: vec![] },
+        Some((_,None))    => Mask::Exposed,
         None              => Mask::Closed,
     },
 };
 
 Mask: Mask = {
-    "[" "*" "]" => Mask::All,
-    "[" <binders: SemiColon<Binder>> "]" => Mask::Exposed { binders },
+    "[" "*" "]" => Mask::Open,
+    "[" <binders: SemiColon<Binder>> "]" => Mask::Exposing { binders },
 };
 
 pub Block: Block = {

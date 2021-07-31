@@ -23,10 +23,11 @@ impl From<(Binder, Vec<Binder>, Mask, Block)> for Binding {
 #[derive(Debug)]
 pub enum Mask {
     Closed,
-    Exposed {
+    Exposed,
+    Exposing {
         binders: Vec<Binder>
     },
-    All
+    Open
 }
 
 #[derive(Debug)]
