@@ -17,7 +17,7 @@ pub BindingMask: Mask = {
 
 Mask: Mask = {
     "[" "*" "]" => Mask::Open,
-    "[" <binders: SemiColon<Binder>> "]" => Mask::Exposing { binders },
+    "[" <SemiColon<Binder>> "]" => <>.into(),
 };
 
 pub Block: Block = {

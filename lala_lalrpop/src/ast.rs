@@ -30,6 +30,12 @@ pub enum Mask {
     Open
 }
 
+impl From<Vec<Binder>> for Mask {
+    fn from(binders: Vec<Binder>) -> Self {
+        Mask::Exposing { binders }
+    }
+}
+
 #[derive(Debug)]
 pub struct Block {
     pub bindings: Vec<Binding>
