@@ -6,22 +6,23 @@ grammar;
 pub Binder: ast::Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => ast::Binder::from(<>);
 
 pub Binding: ast::Binding = {
-    <b:Binder> <bm:BindingMask> <blk:Block> => ast::Binding { name: b, expose: bm, block: blk },
+    <b:Binder> <bm:BindingMask> <blk:Block> => ast::Binding::from((b, bm, blk)),
 };
 
-pub BindingMask: Option<Vec<ast::Binder>> = {
+pub BindingMask: ast::Mask = {
     <m:(":" Mask?)?> "=" => match m {
-        Some((_,Some(m))) => Some(m),
-        Some((_,None)) => Some(vec![]),
-        None    => None,
+        Some((_,Some(m))) => m,
+        Some((_,None)) => ast::Mask::Exposed { binders: vec![] },
+        None    => ast::Mask::Closed,
     },
 };
 
-pub Mask : Vec<ast::Binder> = {
-    "[" "*"? "]" => vec![],
+pub Mask : ast::Mask = {
+    "[" "]" => ast::Mask::Exposed { binders: vec![] },
+    "[" "*" "]" => ast::Mask::All,
     "[" <mut mbs:MaskBinderVec> "]" => {
         mbs.reverse();
-        mbs
+        ast::Mask::Exposed { binders: mbs }
     }
 };
 
