@@ -1,57 +1,99 @@
-use crate::ast;
+use crate::ast::*;
 // use std::str::FromStr;
 
 grammar;
 
-pub Binder: ast::Binder = r"[a-zA-Z][0-9a-zA-Z]*'*" => ast::Binder::from(<>);
-
-pub Binding: ast::Binding = {
-    <b:Binder> <bm:BindingMask> <blk:Block> => ast::Binding { name: b, expose: bm, block: blk },
+pub LaLa: Block = {
+    <Block>,
+    <SemiColon<Binding>> => Sequential::from(<>).into()
 };
 
-pub BindingMask: Option<Vec<ast::Binder>> = {
-    <m:(":" Mask?)?> "=" => match m {
-        Some((_,Some(m))) => Some(m),
-        Some((_,None)) => Some(vec![]),
-        None    => None,
+pub Binding: Binding = {
+    <b:Binder> <bm:BindingMask> <blk:Block> => (b, bm, blk).into(),
+    <b:Binder> <args:SpacedOnce<Binder>> <bm:BindingMask> <blk:Block> => (b, args, bm, blk).into(),
+};
+
+BindingMask: Mask = {
+    ":" <Mask?> "=" => match <> {
+        Some(m) => m,
+        None    => Mask::Exposed,
     },
+    "=" => Mask::Closed,
 };
 
-pub Mask : Vec<ast::Binder> = {
-    "[" "*"? "]" => vec![],
-    "[" <mut mbs:MaskBinderVec> "]" => {
-        mbs.reverse();
-        mbs
+Mask: Mask = {
+    "[" "*" "]" => Mask::Open,
+    "*" => Mask::Open,
+    "[" <SemiColon<Binder>> "]" => <>.into(),
+    <SemiColonOnce<Binder>> => <>.into(),
+};
+
+pub Sequential: Sequential = {
+    "[" <SemiColon<Binding>> "]" => Sequential::from(<>),
+    "[" <Sequential> "]",
+};
+
+pub Parallel: Parallel = {
+    "{" <SemiColon<Binding>> "}" => Parallel::from(<>).into(),
+    "{" <Parallel> "}",
+};
+
+pub Block: Block = {
+    <Sequential> => <>.into(),
+    <Parallel>   => <>.into(),
+};
+
+// Identifiers
+
+Binder: Binder = {
+    <IDENT> => Binder::Identity(<>),
+    <UIDENT> => {
+        let s = <>.strip_prefix("_").unwrap().into();
+        Binder::Anonymous(s)
+    },
+    <UNDERSCORE> => Binder::Arbitrary
+};
+
+IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+UIDENT: String = r"_+[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+UNDERSCORE: String = "_" => <>.into();
+
+// Const
+
+// INTCONST: i32 = r"[0-9]+" => i32::from_str(<>).unwrap();
+
+// Utility
+
+Spaced<T>: Vec<T> = {
+    <mut v:T*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
     }
 };
 
-pub MaskBinderVec : Vec<ast::Binder> = {
-    <b:Binder> ";" <mut bs:MaskBinderVec> => {
-        bs.push(b);
-        bs
-    },
-    <Binder> => vec![<>],
+SpacedOnce<T>: Vec<T> = {
+    <mut v:T*> <e:T> => {
+        v.push(e);
+        v
+    }
 };
 
-pub BindingVec: Vec<ast::Binding> = {
-    <b:Binding> ";" <mut bs:BindingVec> => {
-        bs.push(b);
-        bs
-    },
-    <Binding> => vec![<>],
-};
-
-pub Block: ast::Block = {
-    "[" "]" => ast::Block { bindings: vec![] },
-    "[" <mut bs:BindingVec> "]" => {
-        ast::Block { 
-            bindings: {
-                bs.reverse();
-                bs
-            } 
+SemiColon<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
         }
-    },
-    "[" <Block> "]",
+    }
 };
 
-// INTCONST: i32 = r"[0-9]+" => i32::from_str(<>).unwrap();
+SemiColonOnce<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T> => {
+        v.push(e);
+        v
+    }
+};

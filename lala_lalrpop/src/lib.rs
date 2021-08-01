@@ -8,9 +8,6 @@ mod tests {
     use super::*;
     #[test]
     fn basic_block() {
-        assert!(lala::BinderParser::new().parse("a").is_ok());
-        assert!(lala::BinderParser::new().parse("a''").is_ok());
-        
         assert!(lala::BindingParser::new().parse("a=[]").is_ok());
         assert!(lala::BindingParser::new().parse("a:=[]").is_ok());
         assert!(lala::BindingParser::new().parse("a:=[]").is_ok());
