@@ -3,12 +3,17 @@ use crate::ast::*;
 
 grammar;
 
+pub LaLa: Block = {
+    <Block>,
+    <SemiColon<Binding>> => Sequential::from(<>).into()
+};
+
 pub Binding: Binding = {
     <b:Binder> <bm:BindingMask> <blk:Block> => (b, bm, blk).into(),
     <b:Binder> <args:SpacedOnce<Binder>> <bm:BindingMask> <blk:Block> => (b, args, bm, blk).into(),
 };
 
-pub BindingMask: Mask = {
+BindingMask: Mask = {
     ":" <Mask?> "=" => match <> {
         Some(m) => m,
         None    => Mask::Exposed,

@@ -14,7 +14,7 @@ fn main() -> anyhow::Result<()> {
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf)?;
 
-    let res = lala::BindingParser::new().parse(&buf).unwrap();
+    let res = lala::LaLaParser::new().parse(&buf).unwrap();
     println!("{}", "=".repeat(80));
     println!("{:#?}", res);
     println!("{}", "=".repeat(80));
