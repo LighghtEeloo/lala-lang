@@ -42,14 +42,41 @@ impl From<Vec<Binder>> for Mask {
 }
 
 #[derive(Debug)]
-pub struct Block {
-    pub bindings: Vec<Binding>
+pub struct Sequential {
+    bindings: Vec<Binding>
 }
 
-impl From<Vec<Binding>> for Block {
+impl From<Vec<Binding>> for Sequential {
     fn from(bindings: Vec<Binding>) -> Self {
-        Block {
-            bindings
-        }
+        Sequential { bindings }
+    }
+}
+
+#[derive(Debug)]
+pub struct Parallel {
+    bindings: Vec<Binding>
+}
+
+impl From<Vec<Binding>> for Parallel {
+    fn from(bindings: Vec<Binding>) -> Self {
+        Parallel { bindings }
+    }
+}
+
+#[derive(Debug)]
+pub enum Block {
+    Sequential(Sequential),
+    Parallel(Parallel),
+}
+
+impl From<Sequential> for Block {
+    fn from(seq: Sequential) -> Self {
+        Block::Sequential(seq)
+    }
+}
+
+impl From<Parallel> for Block {
+    fn from(par: Parallel) -> Self {
+        Block::Parallel(par)
     }
 }

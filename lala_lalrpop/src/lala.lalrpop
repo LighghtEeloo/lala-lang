@@ -20,9 +20,19 @@ Mask: Mask = {
     "[" <SemiColon<Binder>> "]" => <>.into(),
 };
 
+pub Sequential: Sequential = {
+    "[" <SemiColon<Binding>> "]" => Sequential::from(<>),
+    "[" <Sequential> "]",
+};
+
+pub Parallel: Parallel = {
+    "{" <SemiColon<Binding>> "}" => Parallel::from(<>).into(),
+    "{" <Parallel> "}",
+};
+
 pub Block: Block = {
-    "[" <SemiColon<Binding>> "]" => <>.into(),
-    "[" <Block> "]",
+    <Sequential> => <>.into(),
+    <Parallel>   => <>.into(),
 };
 
 // Identifiers
