@@ -3,12 +3,11 @@ use super::*;
 
 impl fmt::Debug for Binder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let binder = match self {
-            Binder::Identity(id) => id,
-            Binder::Anonymous(an) => an,
-            Binder::Arbitrary => "_",
-        };
-        write!(f, "{}", binder)
+        match self {
+            Binder::Identity(id) => write!(f, "{}", id),
+            Binder::Anonymous(an) => write!(f, "_{}", an),
+            Binder::Arbitrary => write!(f, "_"),
+        }
     }
 }
 

@@ -42,7 +42,10 @@ pub Block: Block = {
 
 Binder: Binder = {
     <IDENT> => Binder::Identity(<>),
-    <UIDENT> => Binder::Anonymous(<>),
+    <UIDENT> => {
+        let s = <>.strip_prefix("_").unwrap().into();
+        Binder::Anonymous(s)
+    },
     <UNDERSCORE> => Binder::Arbitrary
 };
 
