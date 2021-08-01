@@ -8,16 +8,18 @@ pub Binding: Binding = {
 };
 
 pub BindingMask: Mask = {
-    <m:(":" Mask?)?> "=" => match m {
-        Some((_,Some(m))) => m,
-        Some((_,None))    => Mask::Exposed,
-        None              => Mask::Closed,
+    ":" <Mask?> "=" => match <> {
+        Some(m) => m,
+        None    => Mask::Exposed,
     },
+    "=" => Mask::Closed,
 };
 
 Mask: Mask = {
     "[" "*" "]" => Mask::Open,
+    "*" => Mask::Open,
     "[" <SemiColon<Binder>> "]" => <>.into(),
+    <SemiColonOnce<Binder>> => <>.into(),
 };
 
 pub Sequential: Sequential = {
@@ -60,5 +62,12 @@ SemiColon<T>: Vec<T> = {
             v.push(e);
             v
         }
+    }
+};
+
+SemiColonOnce<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T> => {
+        v.push(e);
+        v
     }
 };
