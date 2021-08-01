@@ -1,9 +1,28 @@
+use std::io::Read;
+
 use lala_lalrpop::lala;
 
 fn main() -> anyhow::Result<()> {
 
+    if std::env::args().len() <= 1 {
+        fast_trial();
+        return Ok(())
+    }
+
     // get the file[s] and combine them in parallel, and then...
 
+    let mut buf = String::new();
+    std::io::stdin().read_to_string(&mut buf)?;
+
+    let res = lala::BindingParser::new().parse(&buf).unwrap();
+    println!("{}", "=".repeat(80));
+    println!("{:#?}", res);
+    println!("{}", "=".repeat(80));
+
+    Ok(())
+}
+
+fn fast_trial() {
     let file_seq = format!("{}", r#"
 a :[*]= [
     b = [];
@@ -50,6 +69,4 @@ b :*= []
     
     let res = lala::ParallelParser::new().parse(&package_par).unwrap();
     println!("{:#?}", res);
-
-    Ok(())
 }
