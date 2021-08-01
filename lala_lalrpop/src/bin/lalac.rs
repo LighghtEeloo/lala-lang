@@ -20,6 +20,11 @@ fn main() -> anyhow::Result<()> {
             v = [];
             w = [];
         };
+        f x y := [];
+        g x y : a; b = [
+            a := [];
+            b := [];
+        ];
         par := {
             d := [];
             e := [];

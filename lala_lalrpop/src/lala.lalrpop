@@ -5,6 +5,7 @@ grammar;
 
 pub Binding: Binding = {
     <b:Binder> <bm:BindingMask> <blk:Block> => (b, bm, blk).into(),
+    <b:Binder> <args:SpacedOnce<Binder>> <bm:BindingMask> <blk:Block> => (b, args, bm, blk).into(),
 };
 
 pub BindingMask: Mask = {
@@ -54,6 +55,23 @@ UNDERSCORE: String = "_" => <>.into();
 // INTCONST: i32 = r"[0-9]+" => i32::from_str(<>).unwrap();
 
 // Utility
+
+Spaced<T>: Vec<T> = {
+    <mut v:T*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+SpacedOnce<T>: Vec<T> = {
+    <mut v:T*> <e:T> => {
+        v.push(e);
+        v
+    }
+};
 
 SemiColon<T>: Vec<T> = {
     <mut v:(<T> ";")*> <e:T?> => match e {
