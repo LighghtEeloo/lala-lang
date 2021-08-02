@@ -75,6 +75,28 @@ impl From<Parallel> for Block {
     }
 }
 
+pub struct ElAst {
+    pub block: Block,
+}
+
+impl From<Block> for ElAst {
+    fn from(block: Block) -> Self {
+        Self { block }
+    }
+}
+
+impl From<Sequential> for ElAst {
+    fn from(seq: Sequential) -> Self {
+        Block::from(seq).into()
+    }
+}
+
+impl From<Parallel> for ElAst {
+    fn from(par: Parallel) -> Self {
+        Block::from(par).into()
+    }
+}
+
 mod print {
     use core::fmt;
     use super::*;
@@ -126,6 +148,12 @@ mod print {
                 Block::Sequential(seq) => write!(f, "{:#?}", seq),
                 Block::Parallel(par) => write!(f, "{:#?}", par),
             }
+        }
+    }
+
+    impl fmt::Debug for ElAst {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{:#?}", self.block)
         }
     }
 }

@@ -3,8 +3,8 @@ use crate::el_ast::*;
 
 grammar;
 
-pub LaLa: Block = {
-    <Block>,
+pub LaLa: ElAst = {
+    <Block> => <>.into(),
     <SemiColon<Binding>> => Sequential::from(<>).into()
 };
 
