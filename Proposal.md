@@ -145,6 +145,20 @@ Abstraction is so common and signaficant in programming languages, but it's so h
 
 // Todo..
 
+Note that a binder can be binded to any expression except an abstraction
+
+```lala
+f := g := []; /* invalid */
+```
+
+since it's not making any sense. If one insist, one should write the following instead.
+
+```lala
+f := [
+    g := [];
+];
+```
+
 ### Mask and Mask Exposure
 
 // Todo..
