@@ -1,3 +1,32 @@
+pub enum Expr {
+    // TypeConstructor(),
+    Abstraction(Binding),
+    Exposure(Atom),
+    Atom(Atom),
+}
+
+pub enum Atom {
+    Literal(Literal),
+    // DataConstructor(Binder, Block),
+    Obstruction(Block),
+    Projection(Box<Atom>, Binder),
+    Application(Binder, Block),
+}
+
+pub enum Pattern {
+    Binder(Binder),
+    Rest(),
+    List(Vec<Pattern>),
+    Append(Vec<Pattern>),
+    Tuple(Vec<Pattern>),
+    HashMap(Vec<Pattern>),
+    Exposure(Vec<Binder>),
+}
+
+pub enum Literal {
+    Str(String),
+}
+
 pub enum Binder {
     Identity(String),
     Anonymous(String),
@@ -48,6 +77,16 @@ impl From<Vec<Binding>> for Sequential {
     }
 }
 
+pub struct Simultaneous {
+    bindings: Vec<Binding>
+}
+
+impl From<Vec<Binding>> for Simultaneous {
+    fn from(bindings: Vec<Binding>) -> Self {
+        Self { bindings }
+    }
+}
+
 pub struct Parallel {
     bindings: Vec<Binding>
 }
@@ -60,6 +99,7 @@ impl From<Vec<Binding>> for Parallel {
 
 pub enum Block {
     Sequential(Sequential),
+    Simultaneous(Simultaneous),
     Parallel(Parallel),
 }
 
@@ -136,6 +176,12 @@ mod print {
         }
     }
 
+    impl fmt::Debug for Simultaneous {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            f.debug_list().entries(self.bindings.iter()).finish()
+        }
+    }
+
     impl fmt::Debug for Parallel {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             f.debug_set().entries(self.bindings.iter()).finish()
@@ -146,6 +192,7 @@ mod print {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
                 Block::Sequential(seq) => write!(f, "{:#?}", seq),
+                Block::Simultaneous(sim) => write!(f, "{:#?}", sim),
                 Block::Parallel(par) => write!(f, "{:#?}", par),
             }
         }
