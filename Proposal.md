@@ -21,7 +21,7 @@ List of Expression
 
 where
 
-1. Literals are just the application of the type `primitive`.
+1. Literals are just the application of the type `primitive` defined by a type constructor in `core`.
 2. An obstruction is a data block with certain computational order, a projection accesses the result of a previous block, and an exposure opens up a binded data block.
 3. Abstraction can be analogized by variables and functions, and works through bindings.
 
@@ -205,6 +205,8 @@ add_1 := add 1;
 
 partially apply a function will produce any other function with fewer arguments to be fed.
 
+Under the hood, the binders (for functions) only takes one actual argument, which is a lazy-evaluated list; you can read more in [pattern language section](#pattern-language).
+
 ### Modular Input
 
 Suppose we want to pass a data block to a function and make use of the bindings immediately, considering it's similar to exposure, we could write
@@ -224,6 +226,44 @@ f <x;y;z> : <res> = [
 ```
 
 because `res` would be ambiguous.
+
+
+## Pattern Language
+
+As we've in fact incountered many pattern usage, I think it's a good time now to formally introduce pattern language in lala:
+
+```lala
+/* destruct a list or array */
+ a b c
+[a,b,c]
+[a]+[b]+[c]
+ab+[c] /* favored for performance (?: dl-list) */
+_ +[c]
+[a]+bc
+[a,_,_]
+[a, ..]
+
+/* destruct a tuple */
+ a,b,c
+(a,b,c)
+(a,_,_)
+(a, ..)
+
+/* destruct a hashmap */
+{a,b,c}
+{a,_,_}
+{a, ..}
+
+/* destruct a block */
+<a;b;c>
+<*>
+```
+
+Notice that there's little `;` in pattern language because `,` looks better (kidding). In fact, the design principle traces back to the difference between binder space and value space. Almost all patterns are dealing with values, so `,` appears everywhere, except `<a; b; c>` as it deals with binder space elimination.
+
+A few other comments:
+1. ` a b c` may seem a bit confusing; but actually we're using it all the time. It's in fact just function arguments, passed to the function in a sequence, one by one. The list itself is lazy-evaluated, so it's destructed, from right to left, eval one single right-most element in the list at a time, and take it to a function that receives one less argument, until the list is empty and the binding is reduce from function to a variable.
+2. `ab+[c]` should be favored over `[a]+bc`, unlike most fp language's behavior. This is because lala prefers vector impl over linked lists. e.g., in the use case of `json` a vector is better most of the time. Say a history of operations are stored. Usually we append, not prepend the latest events.
 
 
 ## Type Constructor
@@ -288,42 +328,15 @@ http_response_status 'data := '{
 };
 ```
 
+## Control Flow and Pattern Matching
 
-## Pattern Language
+// Todo...
 
-Introducing pattern language in lala:
 
-```lala
-/* destruct a list or array */
- a b c
-[a,b,c]
-[a]+[b]+[c]
-ab+[c] /* favored for performance (?: dl-list) */
-_ +[c]
-[a]+bc
-[a,_,_]
-[a, ..]
-
-/* destruct a tuple */
- a,b,c
-(a,b,c)
-(a,_,_)
-(a, ..)
-
-/* destruct a hashmap */
-{a,b,c}
-{a,_,_}
-{a, ..}
-
-/* destruct a block */
-<a;b;c>
-```
-
-Notice that there's little `;` in pattern language because `,` looks better (kidding). In fact, the design principle traces back to the difference between binder space and value space. Almost all patterns are dealing with values, so `,` appears everywhere, except `<a; b; c>` as it deals with binder space elimination.
-
-## Lala File
+## Lala File and Package
 
 // Todo..
+
 
 ## Package Manager
 
