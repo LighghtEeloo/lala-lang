@@ -4,7 +4,7 @@ An expression oriented programming language / data notation, designed for elegan
 
 ## Expression
 
-All terms in `lala` will eventually converge to an expression. Here a list of all expressions is given. The list will be revisited as new terms are introduced.
+All terms in `lala` will eventually converge to an expression, so it's fair to start from. Here is a list of all forms of expressions. The list will be revisited as new terms are introduced.
 
 List of Expression
 
@@ -25,9 +25,13 @@ where
 2. An obstruction is a data block with certain computational order, a projection accesses the result of a previous block, and an exposure opens up a binded data block.
 3. Abstraction can be analogized by variables and functions, and works through bindings.
 
-## Basic Literal
+## Basics 
 
-Literals are int, float and string.
+Let's bootstrap with some quick examples.
+
+### Literal
+
+Literals contain int, float and string.
 
 ```lala
 42;       /* int */
@@ -43,6 +47,60 @@ Literals are int, float and string.
 where `/* ... */` represents comment.
 
 A more sophisticated literal will come later.
+
+### Binders
+
+Use binders to introduce new variables and functions.
+
+```lala
+ans := 42;
+x   := ans;
+x'  := ans - 1; /* only suffix `'`s are allowed */
+add x y := x + y;
+```
+
+### Operators
+
+Operators are special binders defined in `core`.
+
+// Todo..
+
+### Type
+
+Use type by prefixing `'`.
+
+```lala
+truth' := bool'true; /* type'data */
+truth := 'true; /* shortened, equal effect */
+```
+
+### Blocks
+
+// Todo..
+
+### Comments and Docs
+
+Finally, perhaps key to maintainable data, let's introduce comment and document syntax.
+
+```lala
+/* Comment */
+
+/* => tag
+any markdown content
+ */
+```
+
+within the markdown area, you may write anything that helps, from a speech to a note, which will be collected together with the binder directly below and renderred to a static doc page. The tags can be used to cluster the pages in a package; leave it blank if not useful.
+
+If the doc is file-wise, or no binder is available, use `!!`.
+
+```lala
+/* => tag !!
+any markdown content
+ */
+```
+
+
 
 ## Data Block
 
@@ -87,8 +145,6 @@ map  := {
 // Todo: List is more of a vector, for easier usage (?: doubly-linked list)
 
 // Todo: Array treated as Tuple
-
-// Todo: All can be typed
 
 // Todo: Set treated as Map (?)
 
@@ -292,7 +348,7 @@ tree 'a := '{
 };
 ```
 
-But you may choose not to force the type:
+But you may choose not to force the type, leaving it ducked:
 
 ```lala
 tree := '{
@@ -301,8 +357,8 @@ tree := '{
     ],
     node '[
         :data,
-        :lt tree,
-        :rt tree,
+        :lt,
+        :rt,
     ],
 };
 ```
@@ -327,6 +383,10 @@ http_response_status 'data := '{
     /* ... */
 };
 ```
+
+// Todo: All data structures can be typed.
+
+// Todo: Binders defined with type (member function / variable).
 
 ## Control Flow and Pattern Matching
 
