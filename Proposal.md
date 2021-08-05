@@ -4,7 +4,7 @@ An expression oriented programming language / data notation, designed for elegan
 
 ## Expression
 
-All terms in `lala` will eventually converge to an expression. Here a list of all expressions is given. The list will be revisited as new terms are introduced.
+All terms in `lala` will eventually converge to an expression, so it's fair to start from. Here is a list of all forms of expressions. The list will be revisited as new terms are introduced.
 
 List of Expression
 
@@ -21,13 +21,17 @@ List of Expression
 
 where
 
-1. Literals are just the application of the type `primitive`.
+1. Literals are just the application of the type `primitive` defined by a type constructor in `core`.
 2. An obstruction is a data block with certain computational order, a projection accesses the result of a previous block, and an exposure opens up a binded data block.
 3. Abstraction can be analogized by variables and functions, and works through bindings.
 
-## Basic Literal
+## Basics 
 
-Literals are int, float and string.
+Let's bootstrap with some quick examples.
+
+### Literal
+
+Literals contain int, float and string.
 
 ```lala
 42;       /* int */
@@ -43,6 +47,60 @@ Literals are int, float and string.
 where `/* ... */` represents comment.
 
 A more sophisticated literal will come later.
+
+### Binders
+
+Use binders to introduce new variables and functions.
+
+```lala
+ans := 42;
+x   := ans;
+x'  := ans - 1; /* only suffix `'`s are allowed */
+add x y := x + y;
+```
+
+### Operators
+
+Operators are special binders defined in `core`.
+
+// Todo..
+
+### Type
+
+Use type by prefixing `'`.
+
+```lala
+truth' := bool'true; /* type'data */
+truth := 'true; /* shortened, equal effect */
+```
+
+### Blocks
+
+// Todo..
+
+### Comments and Docs
+
+Finally, perhaps key to maintainable data, let's introduce comment and document syntax.
+
+```lala
+/* Comment */
+
+/* => tag
+any markdown content
+ */
+```
+
+within the markdown area, you may write anything that helps, from a speech to a note, which will be collected together with the binder directly below and renderred to a static doc page. The tags can be used to cluster the pages in a package; leave it blank if not useful.
+
+If the doc is file-wise, or no binder is available, use `!!`.
+
+```lala
+/* => tag !!
+any markdown content
+ */
+```
+
+
 
 ## Data Block
 
@@ -88,13 +146,11 @@ map  := {
 
 // Todo: Array treated as Tuple
 
-// Todo: All can be typed
-
 // Todo: Set treated as Map (?)
 
 ## Binder Space and Value Space
 
-We use different separators for the two spaces. `;` acts upon the binder space, standing for a pulse of computation. an operation that don't show effect by returning value, and a reusable piece of code; while `,` acts upon the value space, standing for conjunction and product of values, and construction or destruction of things. 
+We use different separators for the two spaces. `;` acts upon the binder space, standing for a pulse of computation. an operation that don't show effect by returning value, and a reusable piece of code; while `,` acts upon the value space, standing for conjunction and product of values, and construction or deconstruction of things. 
 
 // Todo..
 
@@ -125,12 +181,33 @@ data := {
 
 // Todo..
 
+```lala
+data := [
+    a := [];
+    b := [];
+];
+<data>;
+```
+
+is equal to 
+
+```lala
+a := [];
+b := [];
+```
+
+note that
+
+```lala
+data == [<data>];
+```
+
 // Note: Exposure with take out pattern?
 
 ```lala
 <a; b; c> := data;
 /* equals to */
-_ : <a; b; c> = data;
+_ := <a; b; c> = data;
 ```
 
 ## Abstraction
@@ -145,25 +222,61 @@ Abstraction is so common and signaficant in programming languages, but it's so h
 
 // Todo..
 
+Note that a binder can be binded to any expression except an abstraction
+
+```lala
+f := g := []; /* invalid */
+```
+
+since it's not making any sense. If one insist, one should write the following instead.
+
+```lala
+f := [
+    g := [];
+];
+```
+
+### Projection
+
+// Todo..
+
+
 ### Mask and Mask Exposure
 
 // Todo..
 
 ```lala
-trigonometric : <sin; sin'> = [
-    math = <lala>.math;
+<sin; sin'> := trigonometric = [
+    math := [<lala>].math;
+    <math> := [<lala>];
+    <math> := lala;
     sin  := math.sin;
     sin' := math.cos;
 ];
 ```
 
+Note that three `math`'s are the same.
+
 ```lala
-trigonometric : <sin; sin'> = [
+<sin; cos> := trigonometric = [
     <lala.math>
 ];
 ```
 
 // Note: see Exposure.
+
+
+### Projection Visibility
+
+Principles: 
+1. If a block can be seen, it can be projected.
+2. If a binder binds to a block, it is the block.
+3. If a binder is masked by `=`, it can't be seen outside the containing block.
+4. If a binder is masked by `:=`, it can be seen outside the containing block.
+
+Thus `=` binders can't be projected to outside the containing block, while `:=` binders can.
+
+Note that binders appear in the form of patterns.
 
 ### Currying
 
@@ -191,6 +304,8 @@ add_1 := add 1;
 
 partially apply a function will produce any other function with fewer arguments to be fed.
 
+Under the hood, the binders (for functions) only takes one actual argument, which is a lazy-evaluated list; you can read more in [pattern language section](#pattern-language).
+
 ### Modular Input
 
 Suppose we want to pass a data block to a function and make use of the bindings immediately, considering it's similar to exposure, we could write
@@ -204,12 +319,50 @@ Note that it's unreasonable to write
 
 ```lala
 /* error */
-f <x;y;z> : <res> = [ 
+f <x;y;z> := <res> = [ 
     res := x + y + z;
 ];
 ```
 
 because `res` would be ambiguous.
+
+
+## Pattern Language
+
+As we've in fact incountered many pattern usage, I think it's a good time now to formally introduce pattern language in lala:
+
+```lala
+/* deconstruct a list or array */
+ a b c
+[a,b,c]
+[a]+[b]+[c]
+ab+[c] /* favored for performance (?: dl-list) */
+_ +[c]
+[a]+bc
+[a,_,_]
+[a, ..]
+
+/* deconstruct a tuple */
+ a,b,c
+(a,b,c)
+(a,_,_)
+(a, ..)
+
+/* deconstruct a hashmap */
+{0: a, 1: b, 2: c}
+{"king": a, "queen": b, "eeloo": c}
+{0: a, ..}
+
+/* deconstruct a block */
+<a;b;c>
+<*>
+```
+
+Notice that there's little `;` in pattern language because `,` looks better (kidding). In fact, the design principle traces back to the difference between binder space and value space. Almost all patterns are dealing with values, so `,` appears everywhere, except `<a; b; c>` as it deals with binder space elimination.
+
+A few other comments:
+1. ` a b c` may seem a bit confusing; but actually we're using it all the time. It's in fact just function arguments, passed to the function in a sequence, one by one. The list itself is lazy-evaluated, so it's deconstructed, from right to left, eval one single right-most element in the list at a time, and take it to a function that receives one less argument, until the list is empty and the binding is reduce from function to a variable.
+2. `ab+[c]` should be favored over `[a]+bc`, unlike most fp language's behavior. This is because lala prefers vector impl over linked lists. e.g., in the use case of `json` a vector is better most of the time. Say a history of operations are stored. Usually we append, not prepend the latest events.
 
 
 ## Type Constructor
@@ -238,7 +391,7 @@ tree 'a := '{
 };
 ```
 
-But you may choose not to force the type:
+But you may choose not to force the type, leaving it ducked:
 
 ```lala
 tree := '{
@@ -247,8 +400,8 @@ tree := '{
     ],
     node '[
         :data,
-        :lt tree,
-        :rt tree,
+        :lt,
+        :rt,
     ],
 };
 ```
@@ -274,42 +427,19 @@ http_response_status 'data := '{
 };
 ```
 
+// Todo: All data structures can be typed.
 
-## Pattern Language
+// Todo: Binders defined with type (member function / variable).
 
-Introducing pattern language in lala:
+## Control Flow and Pattern Matching
 
-```lala
-/* destruct a list or array */
- a b c
-[a,b,c]
-[a]+[b]+[c]
-ab+[c] /* favored for performance (?: dl-list) */
-_ +[c]
-[a]+bc
-[a,_,_]
-[a, ..]
+// Todo...
 
-/* destruct a tuple */
- a,b,c
-(a,b,c)
-(a,_,_)
-(a, ..)
 
-/* destruct a hashmap */
-{a,b,c}
-{a,_,_}
-{a, ..}
-
-/* destruct a block */
-<a;b;c>
-```
-
-Notice that there's little `;` in pattern language because `,` looks better (kidding). In fact, the design principle traces back to the difference between binder space and value space. Almost all patterns are dealing with values, so `,` appears everywhere, except `<a; b; c>` as it deals with binder space elimination.
-
-## Lala File
+## Lala File and Package
 
 // Todo..
+
 
 ## Package Manager
 
