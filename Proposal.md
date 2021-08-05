@@ -150,7 +150,7 @@ map  := {
 
 ## Binder Space and Value Space
 
-We use different separators for the two spaces. `;` acts upon the binder space, standing for a pulse of computation. an operation that don't show effect by returning value, and a reusable piece of code; while `,` acts upon the value space, standing for conjunction and product of values, and construction or destruction of things. 
+We use different separators for the two spaces. `;` acts upon the binder space, standing for a pulse of computation. an operation that don't show effect by returning value, and a reusable piece of code; while `,` acts upon the value space, standing for conjunction and product of values, and construction or deconstruction of things. 
 
 // Todo..
 
@@ -181,12 +181,33 @@ data := {
 
 // Todo..
 
+```lala
+data := [
+    a := [];
+    b := [];
+];
+<data>;
+```
+
+is equal to 
+
+```lala
+a := [];
+b := [];
+```
+
+note that
+
+```lala
+data == [<data>];
+```
+
 // Note: Exposure with take out pattern?
 
 ```lala
 <a; b; c> := data;
 /* equals to */
-_ : <a; b; c> = data;
+_ := <a; b; c> = data;
 ```
 
 ## Abstraction
@@ -215,25 +236,47 @@ f := [
 ];
 ```
 
+### Projection
+
+// Todo..
+
+
 ### Mask and Mask Exposure
 
 // Todo..
 
 ```lala
-trigonometric : <sin; sin'> = [
-    math = <lala>.math;
+<sin; sin'> := trigonometric = [
+    math := [<lala>].math;
+    <math> := [<lala>];
+    <math> := lala;
     sin  := math.sin;
     sin' := math.cos;
 ];
 ```
 
+Note that three `math`'s are the same.
+
 ```lala
-trigonometric : <sin; sin'> = [
+<sin; cos> := trigonometric = [
     <lala.math>
 ];
 ```
 
 // Note: see Exposure.
+
+
+### Projection Visibility
+
+Principles: 
+1. If a block can be seen, it can be projected.
+2. If a binder binds to a block, it is the block.
+3. If a binder is masked by `=`, it can't be seen outside the containing block.
+4. If a binder is masked by `:=`, it can be seen outside the containing block.
+
+Thus `=` binders can't be projected to outside the containing block, while `:=` binders can.
+
+Note that binders appear in the form of patterns.
 
 ### Currying
 
@@ -276,7 +319,7 @@ Note that it's unreasonable to write
 
 ```lala
 /* error */
-f <x;y;z> : <res> = [ 
+f <x;y;z> := <res> = [ 
     res := x + y + z;
 ];
 ```
@@ -289,7 +332,7 @@ because `res` would be ambiguous.
 As we've in fact incountered many pattern usage, I think it's a good time now to formally introduce pattern language in lala:
 
 ```lala
-/* destruct a list or array */
+/* deconstruct a list or array */
  a b c
 [a,b,c]
 [a]+[b]+[c]
@@ -299,18 +342,18 @@ _ +[c]
 [a,_,_]
 [a, ..]
 
-/* destruct a tuple */
+/* deconstruct a tuple */
  a,b,c
 (a,b,c)
 (a,_,_)
 (a, ..)
 
-/* destruct a hashmap */
-{a,b,c}
-{a,_,_}
-{a, ..}
+/* deconstruct a hashmap */
+{0: a, 1: b, 2: c}
+{"king": a, "queen": b, "eeloo": c}
+{0: a, ..}
 
-/* destruct a block */
+/* deconstruct a block */
 <a;b;c>
 <*>
 ```
@@ -318,7 +361,7 @@ _ +[c]
 Notice that there's little `;` in pattern language because `,` looks better (kidding). In fact, the design principle traces back to the difference between binder space and value space. Almost all patterns are dealing with values, so `,` appears everywhere, except `<a; b; c>` as it deals with binder space elimination.
 
 A few other comments:
-1. ` a b c` may seem a bit confusing; but actually we're using it all the time. It's in fact just function arguments, passed to the function in a sequence, one by one. The list itself is lazy-evaluated, so it's destructed, from right to left, eval one single right-most element in the list at a time, and take it to a function that receives one less argument, until the list is empty and the binding is reduce from function to a variable.
+1. ` a b c` may seem a bit confusing; but actually we're using it all the time. It's in fact just function arguments, passed to the function in a sequence, one by one. The list itself is lazy-evaluated, so it's deconstructed, from right to left, eval one single right-most element in the list at a time, and take it to a function that receives one less argument, until the list is empty and the binding is reduce from function to a variable.
 2. `ab+[c]` should be favored over `[a]+bc`, unlike most fp language's behavior. This is because lala prefers vector impl over linked lists. e.g., in the use case of `json` a vector is better most of the time. Say a history of operations are stored. Usually we append, not prepend the latest events.
 
 
