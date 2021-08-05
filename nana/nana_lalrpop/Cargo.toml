@@ -1,0 +1,14 @@
+[package]
+name = "nana_lalrpop"
+version = "0.1.0"
+edition = "2018"
+
+build = "build.rs"
+
+[build-dependencies]
+lalrpop = "0.19"
+
+[dependencies]
+anyhow = "1"
+lalrpop-util = "0.19"
+regex = "1"
