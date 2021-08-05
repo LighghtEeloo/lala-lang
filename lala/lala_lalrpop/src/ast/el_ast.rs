@@ -35,35 +35,34 @@ pub enum Binder {
 
 pub struct Binding {
     pub binder: Binder,
-    pub args: Vec<Binder>,
+    pub args: Option<Pattern>,
     pub mask: Mask,
-    pub block: Block
+    pub atom: Atom,
 }
 
-impl From<(Binder, Mask, Block)> for Binding {
-    fn from((binder, mask, block): (Binder, Mask, Block)) -> Self {
-        Self { binder, args: Vec::new(), mask, block }
+impl From<(Binder, Mask, Atom)> for Binding {
+    fn from((binder, mask, atom): (Binder, Mask, Atom)) -> Self {
+        Self { binder, args: None, mask, atom }
     }
 }
 
-impl From<(Binder, Vec<Binder>, Mask, Block)> for Binding {
-    fn from((binder, args, mask, block): (Binder, Vec<Binder>, Mask, Block)) -> Self {
-        Self { binder, args, mask, block }
+impl From<(Binder, Pattern, Mask, Atom)> for Binding {
+    fn from((binder, args, mask, atom): (Binder, Pattern, Mask, Atom)) -> Self {
+        Self { binder, args: Some(args), mask, atom }
     }
 }
 
 pub enum Mask {
     Closed,
-    Exposed,
-    Exposing {
-        binders: Vec<Binder>
+    Exposed {
+        pattern: Option<Pattern>
     },
     Open
 }
 
-impl From<Vec<Binder>> for Mask {
-    fn from(binders: Vec<Binder>) -> Self {
-        Mask::Exposing { binders }
+impl From<Option<Pattern>> for Mask {
+    fn from(pattern: Option<Pattern>) -> Self {
+        Mask::Exposed { pattern }
     }
 }
 
@@ -141,6 +140,45 @@ mod print {
     use core::fmt;
     use super::*;
 
+    fn flatten_iter<I, T>(iter: I, sep: &str) -> String
+    where I: Iterator<Item = T>, T: Into<String> {
+        let vec: Vec<String> = iter.map(|x| x.into()).collect();
+        vec.join(sep)
+    }
+
+    impl fmt::Debug for Atom {
+        fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            todo!()
+        }
+    }
+
+    impl fmt::Debug for Pattern {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let s = match self {
+                Pattern::Binder(binder) => format!("{:?}", binder),
+                Pattern::Rest() => format!(".."),
+                Pattern::List(_) => todo!(),
+                Pattern::Append(_) => todo!(),
+                Pattern::Tuple(_) => todo!(),
+                Pattern::HashMap(_) => todo!(),
+                Pattern::Exposure(binders) => {
+                    format!("<{}>", flatten_iter(binders.into_iter(), ";"))
+                }
+            };
+            write!(f, "{}", s)
+        }
+    }
+
+    impl Into<String> for &Binder {
+        fn into(self) -> String {
+            match self {
+                Binder::Identity(id) => format!("{}", id),
+                Binder::Anonymous(an) => format!("_{}", an),
+                Binder::Arbitrary => format!("_"),
+            }
+        }
+    }
+
     impl fmt::Debug for Binder {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
@@ -153,8 +191,12 @@ mod print {
 
     impl fmt::Debug for Binding {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let Self { binder, args, mask, block } = self;
-            write!(f, "{:?} {:?} {:?} {:#?}", binder, args, mask, block)
+            let Self { binder, args, mask, atom } = self;
+            let args = match args {
+                Some(pat) => format!(" {:?}", pat),
+                None => format!(""),
+            };
+            write!(f, "{:?}{} {:?} {:#?}", binder, args, mask, atom)
         }
     }
 
@@ -162,8 +204,8 @@ mod print {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             let s = match self {
                 Mask::Closed  => "=".to_owned(),
-                Mask::Exposed => ":=".to_owned(),
-                Mask::Exposing { binders } => format!(":{:?}=", binders),
+                Mask::Exposed { pattern: None } => ":=".to_owned(),
+                Mask::Exposed { pattern: Some(pat) } => format!(":{:?}=", pat),
                 Mask::Open    => ":*=".to_owned(),
             };
             write!(f, "{}", s)
