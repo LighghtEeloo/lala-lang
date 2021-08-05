@@ -46,9 +46,9 @@ A (fake) package manager in pure lala, designed more as a structural convention 
 
 
 ## Language Proposal
-Nana: tbd.
-Lala: [lala-lang proposal](lala/Proposal.md).
-Dada: tbd.
+- Nana: tbd.
+- Lala: [lala-lang proposal](lala/Proposal.md).
+- Dada: tbd.
 
 ## Current Progress
 Using [lalrpop](https://github.com/lalrpop/lalrpop) as nana/lala's parser to Rust.
