@@ -7,12 +7,22 @@ pub Nana: Nana = {
 };
 
 Expr: Expr = {
-    <Atom> => <>.into(),
+    <ExprAtom> => <>.into(),
     <Application> => <>.into(),
+};
+
+ExprAtom: Expr = {
+    // "(" <Expr> ")" => <>,
+    <Atom> => <>.into(),
+};
+
+Application: Application = {
+    <b:Binder> <eas:ExprAtom+> => (b,eas).into(),
 };
 
 Atom: Atom = {
     <Block> => <>.into(),
+    <Binder> => <>.into(),
     <Literal> => <>.into(),
 };
 
@@ -23,11 +33,6 @@ Block: Block = {
 BlockInner: Block = {
     <bs:Binding*> <v:Expr> => (bs, v).into(),
     <Binding*> => <>.into(),
-};
-
-Application: Application = {
-    <b:Binder> => b.into(),
-    <b:Binder> <ats:Atom+> => (b,ats).into(),
 };
 
 Literal: Literal = {
@@ -46,7 +51,7 @@ Binder: Binder = {
 };
 
 Head: Head = {
-    <b:Binder> <p:Pattern> <m:Mask> => (b,p,m).into(),
+    <b:Binder> <ps:Pattern> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
     <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
@@ -60,7 +65,7 @@ Pattern: Pattern = {
     <WILDCARD> => Pattern::Arbitrary,
     "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs.into()),
     "<" <EVERYTHING> ">" => Pattern::Exposure(ExposurePattern::All),
-    // "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps), // Todo: Seq pat
+    "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps), // Fixme:Sequence
 };
 
 

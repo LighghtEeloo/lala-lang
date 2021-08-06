@@ -13,7 +13,14 @@ pub enum Expr {
 pub enum Atom {
     Block(Block),
     Struct(Struct),
+    Value(Binder),
     Literal(Literal),
+}
+
+#[derive(Debug, Clone)]
+pub struct Application {
+    binder: Binder,
+    arg: Option<Box<Expr>>,
 }
 
 #[derive(Debug, Clone)]
@@ -31,12 +38,6 @@ pub enum Struct {
 
 #[derive(Debug, Clone)]
 pub struct Literal(String);
-
-#[derive(Debug, Clone)]
-pub struct Application {
-    binder: Binder,
-    arg: Option<Box<Atom>>,
-}
 
 #[derive(Debug, Clone)]
 pub struct Binding {
@@ -106,6 +107,9 @@ mod construct {
     impl From<Struct> for Atom {
         fn from(stct: Struct) -> Self { Self::Struct(stct) }
     }
+    impl From<Binder> for Atom {
+        fn from(binder: Binder) -> Self { Self::Value(binder) }
+    }
     impl From<Literal> for Atom {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
     }
@@ -129,30 +133,16 @@ mod construct {
         }
     }
 
-    impl From<Binder> for Application {
-        fn from(binder: Binder) -> Self {
-            let arg = None;
-            Self { binder, arg }
-        }
-    }
-    impl From<(Binder, Atom)> for Application {
-        fn from((binder, arg): (Binder, Atom)) -> Self {
+    impl From<(Binder, Expr)> for Application {
+        fn from((binder, arg): (Binder, Expr)) -> Self {
             let arg = Some(Box::new(arg));
             Self { binder, arg }
         }
     }
-    impl From<(Binder, Option<Atom>)> for Application {
-        fn from((binder, arg): (Binder, Option<Atom>)) -> Self {
-            match arg {
-                Some(arg) => (binder, arg).into(),
-                None => binder.into(),
-            }
-        }
-    }
-    impl From<(Binder, Vec<Atom>)> for Application {
-        fn from((binder, args): (Binder, Vec<Atom>)) -> Self {
+    impl From<(Binder, Vec<Expr>)> for Application {
+        fn from((binder, args): (Binder, Vec<Expr>)) -> Self {
             let es = args.into_iter().map(Expr::from).collect();
-            let arg: Atom = Struct::Sequence(es).into();
+            let arg = Expr::from(Atom::from(Struct::Sequence(es)));
             (binder, arg).into()
         }
     }
@@ -169,15 +159,22 @@ mod construct {
         }
     }
 
+    impl From<(Pattern, Mask)> for Head {
+        fn from((pattern, mask): (Pattern, Mask)) -> Self {
+            Self::Pat { pattern, mask }
+        }
+    }
     impl From<(Binder, Pattern, Mask)> for Head {
         /// Val form
         fn from((binder, args, mask): (Binder, Pattern, Mask)) -> Self {
             Self::Fun { binder, args, mask }
         }
     }
-    impl From<(Pattern, Mask)> for Head {
-        fn from((pattern, mask): (Pattern, Mask)) -> Self {
-            Self::Pat { pattern, mask }
+    impl From<(Binder, Vec<Pattern>, Mask)> for Head {
+        /// Val form
+        fn from((binder, args, mask): (Binder, Vec<Pattern>, Mask)) -> Self {
+            let args = Pattern::Sequence(args);
+            Self::Fun { binder, args, mask }
         }
     }
 
