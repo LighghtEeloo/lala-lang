@@ -1,3 +1,123 @@
+use crate::na_ast::*;
+
 grammar;
 
-pub IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+pub Nana: Nana = {
+    <Expr> => <>.into(),
+    // <Exprs> => <>.into(),
+};
+
+Expr: Expr = {
+    <Atom> => <>.into(),
+    <Binding> => <>.into(),
+};
+
+Atom: Atom = {
+    <Block> => <>.into(),
+    <Literal> => <>.into(), // Todo: proper delimiter
+};
+
+Block: Block = {
+    "[" <es:Exprs> "]" => es.into(),
+};
+
+Exprs: Vec<Expr> = <SemiColon<Expr>>;
+
+Literal: Literal = {
+    r#"".*""# => <>.to_owned().into(),
+};
+
+Binding: Binding = {
+    <h:Head> <m:Mask> <e:Expr> => (h,m,e).into(),
+};
+
+Binder: Binder = {
+    <IDENT> => <>.into(),
+    <UIDENT> => <>.into(),
+    <UNDERSCORE> => <>.into(),
+    <SYMBOLIDENT> => <>.into(),
+};
+
+Head: Head = {
+    <b:Binder> <p:Pattern> => (b,p).into(),
+    <Pattern> => <>.into(),
+};
+
+Mask: Mask = {
+    "=" => Mask::Closed,
+    ":=" => Mask::Exposed,
+};
+
+Pattern: Pattern = {
+    <Binder> => Pattern::Binder(<>),
+    "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs),
+    "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps),
+};
+
+
+
+
+// Identifiers
+
+IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+UIDENT: String = r"_[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+UNDERSCORE: String = "_" => <>.into();
+SYMBOLIDENT: String = "(" <syn:r"-"> ")" => syn.into(); // Todo: [+-*/~!$%&]
+
+
+// Const
+
+// INTCONST: i32 = r"[+-]?[0-9]+" => i32::from_str(<>).unwrap();
+
+// Utility
+
+Spaced<T>: Vec<T> = {
+    <mut v:T*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+SpacedOnce<T>: Vec<T> = {
+    <mut v:T*> <e:T> => {
+        v.push(e);
+        v
+    }
+};
+
+Comma<T>: Vec<T> = {
+    <mut v:(<T> ",")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+CommaOnce<T>: Vec<T> = {
+    <mut v:(<T> ",")*> <e:T> => {
+        v.push(e);
+        v
+    }
+};
+
+SemiColon<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+SemiColonOnce<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T> => {
+        v.push(e);
+        v
+    }
+};
