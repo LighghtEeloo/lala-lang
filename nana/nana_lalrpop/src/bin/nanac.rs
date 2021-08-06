@@ -31,6 +31,7 @@ fn fast_trial() {
             divine := [];
             "pi"
         ];
+        "dine"
     ];
 ]
     "#);

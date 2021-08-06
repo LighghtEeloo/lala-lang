@@ -27,8 +27,8 @@ Block: Block = {
 };
 
 BlockInner: Block = {
-    <bs:Binding*> <v:Expr> => (bs, v).into(),
-    <Binding*> => <>.into(),
+    <bs:Binding+> <v:Expr> => (bs, v).into(),
+    <Binding+> => <>.into(),
 };
 
 Literal: Literal = {
