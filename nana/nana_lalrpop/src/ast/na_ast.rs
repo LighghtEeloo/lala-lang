@@ -12,6 +12,7 @@ pub enum Expr {
 #[derive(Debug, Clone)]
 pub enum Atom {
     Block(Block),
+    Struct(Struct),
     Literal(Literal),
 }
 
@@ -22,13 +23,20 @@ pub struct Block {
 }
 
 #[derive(Debug, Clone)]
-pub struct Application {
-    binder: Binder,
-    arg: Option<Box<Atom>>,
+pub enum Struct {
+    Sequence(Vec<Expr>),
+    Tuple(Vec<Expr>),
+    Hashmap(Vec<(Literal, Expr)>),
 }
 
 #[derive(Debug, Clone)]
 pub struct Literal(String);
+
+#[derive(Debug, Clone)]
+pub struct Application {
+    binder: Binder,
+    arg: Option<Box<Atom>>,
+}
 
 #[derive(Debug, Clone)]
 pub struct Binding {
@@ -95,6 +103,9 @@ mod construct {
     impl From<Block> for Atom {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
+    impl From<Struct> for Atom {
+        fn from(stct: Struct) -> Self { Self::Struct(stct) }
+    }
     impl From<Literal> for Atom {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
     }
@@ -109,6 +120,12 @@ mod construct {
         fn from(binding_space: Vec<Binding>) -> Self { 
             let value_space = None;
             Self { binder_space: binding_space, value_space } 
+        }
+    }
+
+    impl From<String> for Literal {
+        fn from(s: String) -> Self {
+            Self (s)
         }
     }
 
@@ -134,14 +151,9 @@ mod construct {
     }
     impl From<(Binder, Vec<Atom>)> for Application {
         fn from((binder, args): (Binder, Vec<Atom>)) -> Self {
-            let arg = args.get(0).cloned(); // Todo: add sequence.
+            let es = args.into_iter().map(Expr::from).collect();
+            let arg: Atom = Struct::Sequence(es).into();
             (binder, arg).into()
-        }
-    }
-
-    impl From<String> for Literal {
-        fn from(s: String) -> Self {
-            Self (s)
         }
     }
 
