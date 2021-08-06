@@ -8,6 +8,7 @@ pub Nana: Nana = {
 
 Expr: Expr = {
     <Atom> => <>.into(),
+    <Application> => <>.into(),
 };
 
 Atom: Atom = {
@@ -24,8 +25,14 @@ BlockInner: Block = {
     <Binding*> => <>.into(),
 };
 
+Application: Application = {
+    <b:Binder> => b.into(),
+    <b:Binder> <ats:Atom+> => (b,ats).into(),
+};
+
 Literal: Literal = {
-    r#"".*""# => <>.to_owned().into(),
+    // r#"".*""# => <>.to_owned().into(),
+    r#""[^"]*""# => <>.to_owned().into(),
 };
 
 Binding: Binding = {
@@ -35,8 +42,7 @@ Binding: Binding = {
 Binder: Binder = {
     <IDENT> => <>.into(),
     <UIDENT> => <>.into(),
-    <UNDERSCORE> => <>.into(),
-    <SYMBOLIDENT> => <>.into(),
+    // <SYMBOLIDENT> => <>.into(),
 };
 
 Head: Head = {
@@ -51,8 +57,10 @@ Mask: Mask = {
 
 Pattern: Pattern = {
     <Binder> => Pattern::Binder(<>),
+    <WILDCARD> => Pattern::Arbitrary,
+    <EVERYTHING> => Pattern::Everything,
     "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs),
-    "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps),
+    // "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps), // Todo: Seq pat
 };
 
 
@@ -62,8 +70,9 @@ Pattern: Pattern = {
 
 IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 UIDENT: String = r"_[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
-UNDERSCORE: String = "_" => <>.into();
-SYMBOLIDENT: String = "(" <syn:r"-"> ")" => syn.into(); // Todo: [+-*/~!$%&]
+WILDCARD: String = "_" => <>.into();
+EVERYTHING: String = "*" => <>.into();
+// SYMBOLIDENT: String = "(" <syn:r"-"> ")" => syn.into(); // Todo: [+-*/~!$%&]
 
 
 // Const

@@ -1,38 +1,45 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Nana {
     pub body: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Atom(Atom),
+    Application(Application),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Atom {
     Block(Block),
-    Literal(Literal)
+    Literal(Literal),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Block {
     pub binder_space: Vec<Binding>,
     pub value_space: Option<Box<Expr>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct Application {
+    binder: Binder,
+    arg: Option<Box<Atom>>,
+}
+
+#[derive(Debug, Clone)]
 pub struct Literal(String);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Binding {
     pub heads: Vec<Head>,
     pub expr: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Binder(String);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Head {
     Fun {
         binder: Binder,
@@ -45,15 +52,17 @@ pub enum Head {
     },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Mask {
     Closed,
     Exposed,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Pattern {
     Binder(Binder),
+    Arbitrary,
+    Everything,
     Exposure(Vec<Binder>),
     Sequence(Vec<Pattern>),
 }
@@ -74,12 +83,15 @@ mod construct {
     impl From<Atom> for Expr {
         fn from(atom: Atom) -> Self { Self::Atom(atom) }
     }
-
-    impl From<Literal> for Atom {
-        fn from(lit: Literal) -> Self { Self::Literal(lit) }
+    impl From<Application> for Expr {
+        fn from(app: Application) -> Self { Self::Application(app) }
     }
+
     impl From<Block> for Atom {
         fn from(block: Block) -> Self { Self::Block(block) }
+    }
+    impl From<Literal> for Atom {
+        fn from(lit: Literal) -> Self { Self::Literal(lit) }
     }
 
     impl From<(Vec<Binding>, Expr)> for Block {
@@ -92,6 +104,33 @@ mod construct {
         fn from(binding_space: Vec<Binding>) -> Self { 
             let value_space = None;
             Self { binder_space: binding_space, value_space } 
+        }
+    }
+
+    impl From<Binder> for Application {
+        fn from(binder: Binder) -> Self {
+            let arg = None;
+            Self { binder, arg }
+        }
+    }
+    impl From<(Binder, Atom)> for Application {
+        fn from((binder, arg): (Binder, Atom)) -> Self {
+            let arg = Some(Box::new(arg));
+            Self { binder, arg }
+        }
+    }
+    impl From<(Binder, Option<Atom>)> for Application {
+        fn from((binder, arg): (Binder, Option<Atom>)) -> Self {
+            match arg {
+                Some(arg) => (binder, arg).into(),
+                None => binder.into(),
+            }
+        }
+    }
+    impl From<(Binder, Vec<Atom>)> for Application {
+        fn from((binder, args): (Binder, Vec<Atom>)) -> Self {
+            let arg = args.get(0).cloned(); // Todo: add sequence.
+            (binder, arg).into()
         }
     }
 
