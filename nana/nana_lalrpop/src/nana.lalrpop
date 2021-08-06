@@ -4,31 +4,32 @@ grammar;
 
 pub Nana: Nana = {
     <Expr> => <>.into(),
-    // <Exprs> => <>.into(),
 };
 
 Expr: Expr = {
     <Atom> => <>.into(),
-    <Binding> => <>.into(),
 };
 
 Atom: Atom = {
     <Block> => <>.into(),
-    <Literal> => <>.into(), // Todo: proper delimiter
+    <Literal> => <>.into(),
 };
 
 Block: Block = {
-    "[" <es:Exprs> "]" => es.into(),
+    "[" <BlockInner> "]" => <>.into(),
 };
 
-Exprs: Vec<Expr> = <SemiColon<Expr>>;
+BlockInner: Block = {
+    <bs:Binding*> <v:Expr> => (bs, v).into(),
+    <Binding*> => <>.into(),
+};
 
 Literal: Literal = {
     r#"".*""# => <>.to_owned().into(),
 };
 
 Binding: Binding = {
-    <h:Head> <m:Mask> <e:Expr> => (h,m,e).into(),
+    <hs:Head+> <e:Expr> ";" => (hs,e).into(),
 };
 
 Binder: Binder = {
@@ -39,8 +40,8 @@ Binder: Binder = {
 };
 
 Head: Head = {
-    <b:Binder> <p:Pattern> => (b,p).into(),
-    <Pattern> => <>.into(),
+    <b:Binder> <p:Pattern> <m:Mask> => (b,p,m).into(),
+    <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
 Mask: Mask = {
@@ -70,23 +71,6 @@ SYMBOLIDENT: String = "(" <syn:r"-"> ")" => syn.into(); // Todo: [+-*/~!$%&]
 // INTCONST: i32 = r"[+-]?[0-9]+" => i32::from_str(<>).unwrap();
 
 // Utility
-
-Spaced<T>: Vec<T> = {
-    <mut v:T*> <e:T?> => match e {
-        None => v,
-        Some(e) => {
-            v.push(e);
-            v
-        }
-    }
-};
-
-SpacedOnce<T>: Vec<T> = {
-    <mut v:T*> <e:T> => {
-        v.push(e);
-        v
-    }
-};
 
 Comma<T>: Vec<T> = {
     <mut v:(<T> ",")*> <e:T?> => match e {

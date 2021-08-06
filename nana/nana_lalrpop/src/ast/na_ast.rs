@@ -6,7 +6,6 @@ pub struct Nana {
 #[derive(Debug)]
 pub enum Expr {
     Atom(Atom),
-    Binding(Box<Binding>),
 }
 
 #[derive(Debug)]
@@ -17,7 +16,8 @@ pub enum Atom {
 
 #[derive(Debug)]
 pub struct Block {
-    pub exprs: Vec<Expr>,
+    pub binder_space: Vec<Binding>,
+    pub value_space: Option<Box<Expr>>,
 }
 
 #[derive(Debug)]
@@ -25,8 +25,7 @@ pub struct Literal(String);
 
 #[derive(Debug)]
 pub struct Binding {
-    pub head: Head,
-    pub mask: Mask,
+    pub heads: Vec<Head>,
     pub expr: Expr,
 }
 
@@ -35,12 +34,14 @@ pub struct Binder(String);
 
 #[derive(Debug)]
 pub enum Head {
-    Val {
+    Fun {
         binder: Binder,
         args: Pattern,
+        mask: Mask,
     },
     Pat {
-        pattern: Pattern
+        pattern: Pattern,
+        mask: Mask,
     },
 }
 
@@ -64,19 +65,14 @@ mod construct {
         fn from(body: Expr) -> Self { Self { body } }
     }
 
-    impl From<Vec<Expr>> for Nana {
-        fn from(exprs: Vec<Expr>) -> Self { 
-            Expr::from(Atom::from(Block::from(exprs))).into()
+    impl From<Block> for Nana {
+        fn from(block: Block) -> Self { 
+            Expr::from(Atom::from(block)).into()
         }
     }
 
     impl From<Atom> for Expr {
         fn from(atom: Atom) -> Self { Self::Atom(atom) }
-    }
-    impl From<Binding> for Expr {
-        fn from(binding: Binding) -> Self {
-            Self::Binding(Box::new(binding))
-        }
     }
 
     impl From<Literal> for Atom {
@@ -86,8 +82,17 @@ mod construct {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
 
-    impl From<Vec<Expr>> for Block {
-        fn from(exprs: Vec<Expr>) -> Self { Self { exprs } }
+    impl From<(Vec<Binding>, Expr)> for Block {
+        fn from((binding_space, value_space): (Vec<Binding>, Expr)) -> Self { 
+            let value_space = Some(Box::new(value_space));
+            Self { binder_space: binding_space, value_space } 
+        }
+    }
+    impl From<Vec<Binding>> for Block {
+        fn from(binding_space: Vec<Binding>) -> Self { 
+            let value_space = None;
+            Self { binder_space: binding_space, value_space } 
+        }
     }
 
     impl From<String> for Literal {
@@ -96,9 +101,9 @@ mod construct {
         }
     }
 
-    impl From<(Head, Mask, Expr)> for Binding {
-        fn from((head, mask, expr): (Head, Mask, Expr)) -> Self {
-            Self { head, mask, expr }
+    impl From<(Vec<Head>, Expr)> for Binding {
+        fn from((heads, expr): (Vec<Head>, Expr)) -> Self {
+            Self { heads, expr }
         }
     }
 
@@ -108,15 +113,15 @@ mod construct {
         }
     }
 
-    impl From<(Binder, Pattern)> for Head {
+    impl From<(Binder, Pattern, Mask)> for Head {
         /// Val form
-        fn from((binder, args): (Binder, Pattern)) -> Self {
-            Self::Val { binder, args }
+        fn from((binder, args, mask): (Binder, Pattern, Mask)) -> Self {
+            Self::Fun { binder, args, mask }
         }
     }
-    impl From<Pattern> for Head {
-        fn from(pattern: Pattern) -> Self {
-            Self::Pat { pattern }
+    impl From<(Pattern, Mask)> for Head {
+        fn from((pattern, mask): (Pattern, Mask)) -> Self {
+            Self::Pat { pattern, mask }
         }
     }
 }

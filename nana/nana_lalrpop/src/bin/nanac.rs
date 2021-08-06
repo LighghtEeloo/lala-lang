@@ -27,7 +27,8 @@ fn fast_trial() {
 [
     pi := [
         rough := "...";
-        pi := "pi";
+        dine := "pi";
+        "dine"
     ];
 ]
     "#);

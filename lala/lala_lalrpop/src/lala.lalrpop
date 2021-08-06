@@ -64,16 +64,6 @@ UNDERSCORE: String = "_" => <>.into();
 
 // Utility
 
-Spaced<T>: Vec<T> = {
-    <mut v:T*> <e:T?> => match e {
-        None => v,
-        Some(e) => {
-            v.push(e);
-            v
-        }
-    }
-};
-
 SpacedOnce<T>: Vec<T> = {
     <mut v:T*> <e:T> => {
         v.push(e);
