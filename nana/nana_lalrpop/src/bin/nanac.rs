@@ -27,7 +27,11 @@ fn fast_trial() {
 [
     pi := <dine> = [
         rough := "...";
-        dine := "pi";
+        id x = x;
+        dine := <*> := [
+            divine := [];
+            "pi"
+        ];
         dine
     ];
 ]

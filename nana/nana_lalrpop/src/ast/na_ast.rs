@@ -62,9 +62,14 @@ pub enum Mask {
 pub enum Pattern {
     Binder(Binder),
     Arbitrary,
-    Everything,
-    Exposure(Vec<Binder>),
+    Exposure(ExposurePattern),
     Sequence(Vec<Pattern>),
+}
+
+#[derive(Debug, Clone)]
+pub enum ExposurePattern {
+    Binders(Vec<Binder>),
+    All
 }
 
 mod construct {
@@ -162,6 +167,10 @@ mod construct {
         fn from((pattern, mask): (Pattern, Mask)) -> Self {
             Self::Pat { pattern, mask }
         }
+    }
+
+    impl From<Vec<Binder>> for ExposurePattern {
+        fn from(binders: Vec<Binder>) -> Self { Self::Binders(binders) }
     }
 }
 

@@ -58,8 +58,8 @@ Mask: Mask = {
 Pattern: Pattern = {
     <Binder> => Pattern::Binder(<>),
     <WILDCARD> => Pattern::Arbitrary,
-    <EVERYTHING> => Pattern::Everything,
-    "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs),
+    "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs.into()),
+    "<" <EVERYTHING> ">" => Pattern::Exposure(ExposurePattern::All),
     // "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps), // Todo: Seq pat
 };
 
