@@ -11,16 +11,17 @@ pub enum Expr {
 
 #[derive(Debug, Clone)]
 pub enum Atom {
+    Expr(Box<Expr>),
     Block(Block),
     Struct(Struct),
-    Value(Binder),
+    Binder(Binder),
     Literal(Literal),
 }
 
 #[derive(Debug, Clone)]
 pub struct Application {
-    binder: Binder,
-    arg: Option<Box<Expr>>,
+    func: Atom,
+    args: Vec<Atom>,
 }
 
 #[derive(Debug, Clone)]
@@ -101,6 +102,11 @@ mod construct {
         fn from(app: Application) -> Self { Self::Application(app) }
     }
 
+    impl From<Expr> for Atom {
+        fn from(e: Expr) -> Self {
+            Self::Expr(Box::new(e))
+        }
+    }
     impl From<Block> for Atom {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
@@ -108,7 +114,7 @@ mod construct {
         fn from(stct: Struct) -> Self { Self::Struct(stct) }
     }
     impl From<Binder> for Atom {
-        fn from(binder: Binder) -> Self { Self::Value(binder) }
+        fn from(binder: Binder) -> Self { Self::Binder(binder) }
     }
     impl From<Literal> for Atom {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
@@ -133,17 +139,14 @@ mod construct {
         }
     }
 
-    impl From<(Binder, Expr)> for Application {
-        fn from((binder, arg): (Binder, Expr)) -> Self {
-            let arg = Some(Box::new(arg));
-            Self { binder, arg }
+    impl From<Atom> for Application {
+        fn from(func: Atom) -> Self {
+            (func, Vec::new()).into()
         }
     }
-    impl From<(Binder, Vec<Expr>)> for Application {
-        fn from((binder, args): (Binder, Vec<Expr>)) -> Self {
-            let es = args.into_iter().map(Expr::from).collect();
-            let arg = Expr::from(Atom::from(Struct::Sequence(es)));
-            (binder, arg).into()
+    impl From<(Atom, Vec<Atom>)> for Application {
+        fn from((func, args): (Atom, Vec<Atom>)) -> Self {
+            Self { func, args }
         }
     }
 

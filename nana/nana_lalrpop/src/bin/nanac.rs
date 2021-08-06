@@ -27,15 +27,10 @@ fn fast_trial() {
 [
     pi := <dine> = [
         rough := "...";
-        id x = x;
         dine := <*> := [
             divine := [];
             "pi"
         ];
-        arbi [f,g,h,x,y] := [
-            f (g (h x)) y
-        ];
-        dine
     ];
 ]
     "#);

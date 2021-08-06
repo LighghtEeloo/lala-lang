@@ -7,22 +7,18 @@ pub Nana: Nana = {
 };
 
 Expr: Expr = {
-    <ExprAtom> => <>.into(),
+    <Atom> => <>.into(),
     <Application> => <>.into(),
 };
 
-ExprAtom: Expr = {
-    // "(" <Expr> ")" => <>,
-    <Atom> => <>.into(),
-};
-
 Application: Application = {
-    <b:Binder> <eas:ExprAtom+> => (b,eas).into(),
+    <func:Atom> <args:Atom+> => (func,args).into(),
 };
 
 Atom: Atom = {
+    "(" <Expr> ")" => <>.into(),
     <Block> => <>.into(),
-    <Binder> => <>.into(),
+    // <Binder> => <>.into(), // Fixme: Binder.
     <Literal> => <>.into(),
 };
 
@@ -51,7 +47,7 @@ Binder: Binder = {
 };
 
 Head: Head = {
-    <b:Binder> <ps:Pattern> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
+    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
     <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
