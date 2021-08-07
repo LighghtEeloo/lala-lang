@@ -24,23 +24,22 @@ fn main() -> anyhow::Result<()> {
 
 fn fast_trial() {
     let file_seq = format!("{}", r#"
-[
-    $pi := $<dine> = [
-        $murmur := "...";
-        $id x := x;
-        $double x := (x,x);
-        $idd x' := [
-            $(x, y) := x';
-            x
-        ];
-        $dine := $<*> := [
-            $divine := [];
-            $divine := [1, 2, 3.0, .4, 5e1];
-            3.1415926
-        ];
-        id dine
+$pi := $<dine> = [
+    $murmur := "...";
+    $id x := x;
+    $double x := (x,x);
+    $idd x' := [
+        $(x, y) := x';
+        x
     ];
-]
+    $dine := $<*> := [
+        $divine := [];
+        $divine := [1, 2, 3.0, .4, 5e1];
+        3.1415926
+    ];
+    id dine
+];
+pi
     "#);
 
     let res = nana::NanaParser::new().parse(&file_seq);

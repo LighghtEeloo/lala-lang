@@ -4,6 +4,7 @@ grammar;
 
 pub Nana: Nana = {
     <Expr> => <>.into(),
+    <BlockInner> => <>.into(),
 };
 
 Expr: Expr = {
