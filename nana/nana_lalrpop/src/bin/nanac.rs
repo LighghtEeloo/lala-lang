@@ -40,7 +40,7 @@ fn fast_trial() {
         x
     ];
     ~ dine := ~ <*> := [
-        ~ divine := [];
+        ~ divine := [|jail|];
         ~ divine := [1, 2, 3.0, .4, 5e1];
         3.1415926
     ];

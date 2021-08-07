@@ -45,6 +45,7 @@ pub enum Literal {
     Int(u64),
     Float(f64),
     Str(String),
+    Raw(String),
 }
 
 #[derive(Clone)]

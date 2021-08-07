@@ -42,6 +42,7 @@ Literal: Literal = {
     <INTCONST> => <>.into(),
     <FLTCONST> => <>.into(),
     <STRCONST> => <>.into(),
+    <RAWCONST> => Literal::Raw(<>.into()),
 };
 
 Binding: Binding = {
@@ -97,6 +98,7 @@ FLTCONST: f64 = {
     r"[0-9]+[eE][-\+]?[0-9]+" => <>.parse::<f64>().unwrap(),
 };
 STRCONST: String = r#""[^"]*""# => <>.into();
+RAWCONST: String = r"\[\|.*\|\]" => <>.into();
 
 // Utility
 
