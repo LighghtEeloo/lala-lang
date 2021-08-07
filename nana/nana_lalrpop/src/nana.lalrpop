@@ -55,10 +55,10 @@ Binder: Binder = {
     // <SYMBOLIDENT> => <>.into(),
 };
 
-// Note: Head is now guarded by "$" because of ambiguity.
+// Note: Head is now guarded by "~" to reduce ambiguity.
 Head: Head = {
-    "$" <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
-    "$" <p:Pattern> <m:Mask> => (p,m).into(),
+    "~" <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
+    "~" <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
 Mask: Mask = {
