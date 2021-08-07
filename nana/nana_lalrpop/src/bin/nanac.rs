@@ -14,9 +14,16 @@ fn main() -> anyhow::Result<()> {
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf)?;
 
-    let res = nana::NanaParser::new().parse(&buf).unwrap();
+    let res = nana::NanaParser::new().parse(&buf);
     println!("{}", "=".repeat(80));
-    println!("{:#?}", res);
+    match res {
+        Ok(res) => {
+            println!("{:#?}", res);
+        }
+        Err(e) => {
+            println!("{}", e);
+        }
+    }
     println!("{}", "=".repeat(80));
 
     Ok(())
