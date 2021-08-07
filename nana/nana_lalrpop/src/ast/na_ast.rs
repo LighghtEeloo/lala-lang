@@ -38,7 +38,11 @@ pub enum Struct {
 }
 
 #[derive(Debug, Clone)]
-pub struct Literal(String);
+pub enum Literal {
+    Int(u64),
+    Float(f64),
+    Str(String),
+}
 
 #[derive(Debug, Clone)]
 pub struct Binding {
@@ -134,9 +138,19 @@ mod construct {
         }
     }
 
+    impl From<u64> for Literal {
+        fn from(i: u64) -> Self {
+            Self::Int (i)
+        }
+    }
+    impl From<f64> for Literal {
+        fn from(f: f64) -> Self {
+            Self::Float (f)
+        }
+    }
     impl From<String> for Literal {
         fn from(s: String) -> Self {
-            Self (s)
+            Self::Str (s)
         }
     }
 

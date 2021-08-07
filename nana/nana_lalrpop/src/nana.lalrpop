@@ -39,8 +39,9 @@ Struct: Struct = {
 };
 
 Literal: Literal = {
-    // r#"".*""# => <>.to_owned().into(),
-    r#""[^"]*""# => <>.to_owned().into(),
+    <INTCONST> => <>.into(),
+    <FLTCONST> => <>.into(),
+    <STRCONST> => <>.into(),
 };
 
 Binding: Binding = {
@@ -87,7 +88,15 @@ EVERYTHING: String = "*" => <>.into();
 
 // Const
 
-// INTCONST: i32 = r"[+-]?[0-9]+" => i32::from_str(<>).unwrap();
+INTCONST: u64 = {
+    r"[0-9]+" => <>.parse::<u64>().unwrap(),
+    // r"0[xX][0-9a-fA-F]+" => <>.parse::<u64>().unwrap(),
+};
+FLTCONST: f64 = {
+    r"[0-9]*\.[0-9]+([eE][-\+]?[0-9]+)?" => <>.parse::<f64>().unwrap(),
+    r"[0-9]+[eE][-\+]?[0-9]+" => <>.parse::<f64>().unwrap(),
+};
+STRCONST: String = r#""[^"]*""# => <>.into();
 
 // Utility
 
