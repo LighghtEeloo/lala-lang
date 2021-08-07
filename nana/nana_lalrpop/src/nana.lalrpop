@@ -35,7 +35,7 @@ BlockInner: Block = {
 };
 
 Struct: Struct = {
-    "[" <Comma<Expr>> "]" => Struct::Sequence(<>),
+    "[" <Comma<Expr>> "]" => Struct::Vector(<>),
     "(" <Comma<Expr>> ")" => Struct::Tuple(<>),
 };
 
@@ -71,8 +71,8 @@ Pattern: Pattern = {
     <WILDCARD> => Pattern::Arbitrary,
     "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs.into()),
     "<" <EVERYTHING> ">" => Pattern::Exposure(ExposurePattern::All),
-    "[" <ps:Comma<Pattern>> "]" => Pattern::Sequence(ps), // Fixme:Sequence
-    "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps), // Fixme:Sequence
+    "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
+    "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
 };
 
 

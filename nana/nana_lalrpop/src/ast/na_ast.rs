@@ -1,15 +1,15 @@
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Nana {
     pub body: Expr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Expr {
     Atom(Atom),
     Application(Application),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Atom {
     Expr(Box<Expr>),
     Block(Block),
@@ -18,21 +18,21 @@ pub enum Atom {
     Literal(Literal),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Application {
     func: Atom,
     args: Vec<Atom>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Block {
     pub binder_space: Vec<Binding>,
     pub value_space: Option<Box<Expr>>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Struct {
-    Sequence(Vec<Expr>),
+    Vector(Vec<Expr>),
     Tuple(Vec<Expr>),
     Hashmap(Vec<(Literal, Expr)>),
 }
@@ -44,16 +44,16 @@ pub enum Literal {
     Str(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Binding {
     pub heads: Vec<Head>,
     pub expr: Expr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Binder(String);
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Head {
     Fun {
         binder: Binder,
@@ -66,27 +66,28 @@ pub enum Head {
     },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Mask {
     Closed,
     Exposed,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Pattern {
     Binder(Binder),
     Arbitrary,
     Exposure(ExposurePattern),
-    Sequence(Vec<Pattern>),
+    Vector(Vec<Pattern>),
     Tuple(Vec<Pattern>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum ExposurePattern {
     Binders(Vec<Binder>),
     All
 }
 
+/// Constructing Ast with From trait
 mod construct {
     use super::*;
 
@@ -191,9 +192,13 @@ mod construct {
     impl From<(Binder, Vec<Pattern>, Mask)> for Head {
         /// Val form
         fn from((binder, args, mask): (Binder, Vec<Pattern>, Mask)) -> Self {
-            let args = Pattern::Sequence(args);
+            let args = Pattern::Vector(args);
             Self::Fun { binder, args, mask }
         }
+    }
+
+    impl From<Binder> for Pattern {
+        fn from(b: Binder) -> Self { Self::Binder(b) }
     }
 
     impl From<Vec<Binder>> for ExposurePattern {
@@ -201,7 +206,173 @@ mod construct {
     }
 }
 
+
+/// Printing Ast.
 mod print {
-    // use super::*;
-    // use core::fmt;
+    use super::*;
+    use std::fmt;
+
+    struct DebugVec<T> (Vec<T>);
+    impl<T> fmt::Debug for DebugVec<T> 
+    where T: fmt::Debug {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let DebugVec(ps) = self;
+            let mut it = ps.iter();
+            if let Some(p) = it.next() {
+                write!(f, "{:#?}", p)?;
+            }
+            for p in it {
+                write!(f, ", {:#?}", p)?;
+            }
+            write!(f, "")
+
+        }
+    }
+
+    impl fmt::Debug for Nana {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "Nana ")?;
+            write!(f, "{:#?}", self.body)
+        }
+    }
+
+    impl fmt::Debug for Expr {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Expr::Atom(a) => {
+                    write!(f, "{:#?}", a)
+                }
+                Expr::Application(app) => {
+                    write!(f, "{:#?}", app)
+                }
+            }
+        }
+    }
+
+    impl fmt::Debug for Atom {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Atom::Expr(e) => write!(f, "{:#?}", e),
+                Atom::Block(e) => write!(f, "{:#?}", e),
+                Atom::Struct(e) => write!(f, "{:#?}", e),
+                Atom::Binder(e) => write!(f, "{:#?}", e),
+                Atom::Literal(e) => write!(f, "{:#?}", e),
+            }
+        }
+    }
+
+    impl fmt::Debug for Application {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "({:#?}", self.func)?;
+            for a in &self.args {
+                write!(f, " {:#?}", a)?;
+            }
+            write!(f, ")")
+        }
+    }
+
+    impl fmt::Debug for Block {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let mut db = f.debug_list();
+            db.entries(self.binder_space.iter());
+            match &self.value_space {
+                Some(e) => db.entry(e).finish(),
+                None => db.finish()
+            }
+        }
+    }
+
+    impl fmt::Debug for Struct {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Struct::Vector(v) => {
+                    write!(f, "[")?;
+                    write!(f, "{:#?}", DebugVec(v.clone()))?;
+                    write!(f, "]")
+                }
+                Struct::Tuple(v) => {
+                    write!(f, "(")?;
+                    write!(f, "{:#?}", DebugVec(v.clone()))?;
+                    write!(f, ")")
+                },
+                Struct::Hashmap(v) => {
+                    write!(f, "{{")?;
+                    write!(f, "{:#?}", DebugVec(v.clone()))?;
+                    write!(f, "}}")
+
+                }
+            }
+        }
+    }
+
+    impl fmt::Debug for Binding {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            for h in &self.heads {
+                write!(f, "{:#?} ", h)?;
+            }
+            write!(f, "{:#?}", self.expr)
+        }
+    }
+
+    impl fmt::Debug for Binder {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.0)
+        }
+    }
+
+    impl fmt::Debug for Head {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Head::Fun { binder, args, mask } => 
+                    write!(f, "{:#?} {:#?} {:#?}", binder, args, mask),
+                Head::Pat { pattern, mask } =>
+                    write!(f, "{:#?} {:#?}", pattern, mask),
+            }
+        }
+    }
+
+    impl fmt::Debug for Mask {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Mask::Closed => write!(f, "="),
+                Mask::Exposed => write!(f, ":="),
+            }
+        }
+    }
+
+    impl fmt::Debug for Pattern {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Pattern::Binder(b) => write!(f, "{:#?}", b),
+                Pattern::Arbitrary => write!(f, "_"),
+                Pattern::Exposure(ex) => write!(f, "{:#?}", ex),
+                Pattern::Vector(ps) => {
+                    write!(f, "[")?;
+                    write!(f, "{:#?}", DebugVec(ps.clone()))?;
+                    write!(f, "]")
+                }
+                Pattern::Tuple(ps) => {
+                    write!(f, "(")?;
+                    write!(f, "{:#?}", DebugVec(ps.clone()))?;
+                    write!(f, ")")
+                }
+            }
+        }
+    }
+
+
+    impl fmt::Debug for ExposurePattern {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                ExposurePattern::Binders(bs) => {
+                    write!(f, "<")?;
+                    write!(f, "{:#?}", DebugVec(
+                        bs.iter().cloned().map(Pattern::from).collect()
+                    ))?;
+                    write!(f, ">")
+                }
+                ExposurePattern::All => write!(f, "<*>"),
+            }
+        }
+    }
 }
