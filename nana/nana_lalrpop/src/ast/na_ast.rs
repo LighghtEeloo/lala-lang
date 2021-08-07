@@ -9,9 +9,12 @@ pub enum Expr {
     Application(Application),
 }
 
+/// A semantically minimal expr, 
+/// meaning that Atom must be associated within itself.
+///
+/// Note that `()` wrapped expr is now in Struct(Tuple).
 #[derive(Clone)]
 pub enum Atom {
-    Expr(Box<Expr>),
     Block(Block),
     Struct(Struct),
     Binder(Binder),
@@ -108,11 +111,6 @@ mod construct {
         fn from(app: Application) -> Self { Self::Application(app) }
     }
 
-    impl From<Expr> for Atom {
-        fn from(e: Expr) -> Self {
-            Self::Expr(Box::new(e))
-        }
-    }
     impl From<Block> for Atom {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
@@ -252,7 +250,6 @@ mod print {
     impl fmt::Debug for Atom {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Atom::Expr(e) => write!(f, "{:#?}", e),
                 Atom::Block(e) => write!(f, "{:#?}", e),
                 Atom::Struct(e) => write!(f, "{:#?}", e),
                 Atom::Binder(e) => write!(f, "{:#?}", e),

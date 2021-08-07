@@ -18,10 +18,9 @@ Application: Application = {
 
 Atom: Atom = {
     // Note: Now parentheses are dealt by single element tuple.
-    // "(" <Expr> ")" => <>.into(), 
     <Block> => <>.into(),
     <Struct> => <>.into(),
-    <Binder> => <>.into(), // Fixme: Binder.
+    <Binder> => <>.into(),
     <Literal> => <>.into(),
 };
 
