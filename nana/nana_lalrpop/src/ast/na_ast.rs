@@ -74,6 +74,7 @@ pub enum Pattern {
     Arbitrary,
     Exposure(ExposurePattern),
     Sequence(Vec<Pattern>),
+    Tuple(Vec<Pattern>),
 }
 
 #[derive(Debug, Clone)]

@@ -16,9 +16,11 @@ Application: Application = {
 };
 
 Atom: Atom = {
-    "(" <Expr> ")" => <>.into(),
+    // Note: Now parentheses are dealt by single element tuple.
+    // "(" <Expr> ")" => <>.into(), 
     <Block> => <>.into(),
-    // <Binder> => <>.into(), // Fixme: Binder.
+    <Struct> => <>.into(),
+    <Binder> => <>.into(), // Fixme: Binder.
     <Literal> => <>.into(),
 };
 
@@ -29,6 +31,11 @@ Block: Block = {
 BlockInner: Block = {
     <bs:Binding+> <v:Expr> => (bs, v).into(),
     <Binding+> => <>.into(),
+};
+
+Struct: Struct = {
+    "[" <Comma<Expr>> "]" => Struct::Sequence(<>),
+    "(" <Comma<Expr>> ")" => Struct::Tuple(<>),
 };
 
 Literal: Literal = {
@@ -46,9 +53,10 @@ Binder: Binder = {
     // <SYMBOLIDENT> => <>.into(),
 };
 
+// Note: Head is now guarded by "$" because of ambiguity.
 Head: Head = {
-    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
-    <p:Pattern> <m:Mask> => (p,m).into(),
+    "$" <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
+    "$" <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
 Mask: Mask = {
@@ -61,7 +69,8 @@ Pattern: Pattern = {
     <WILDCARD> => Pattern::Arbitrary,
     "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs.into()),
     "<" <EVERYTHING> ">" => Pattern::Exposure(ExposurePattern::All),
-    "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps), // Fixme:Sequence
+    "[" <ps:Comma<Pattern>> "]" => Pattern::Sequence(ps), // Fixme:Sequence
+    "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps), // Fixme:Sequence
 };
 
 

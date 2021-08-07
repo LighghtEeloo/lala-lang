@@ -25,10 +25,11 @@ fn main() -> anyhow::Result<()> {
 fn fast_trial() {
     let file_seq = format!("{}", r#"
 [
-    pi := <dine> = [
-        rough := "...";
-        dine := <*> := [
-            divine := [];
+    $pi := $<dine> = [
+        $rough := "...";
+        $dine := $<*> := [
+            $divine := [];
+            $divine := ["1","2","3"];
             "pi"
         ];
         "dine"
