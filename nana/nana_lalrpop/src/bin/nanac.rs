@@ -4,7 +4,7 @@ use nana_lalrpop::nana;
 
 fn main() -> anyhow::Result<()> {
 
-    if std::env::args().len() <= 1 {
+    if std::env::args().len() > 1 {
         fast_trial();
         return Ok(())
     }

@@ -4,7 +4,7 @@ use lala_lalrpop::lala;
 
 fn main() -> anyhow::Result<()> {
 
-    if std::env::args().len() <= 1 {
+    if std::env::args().len() > 1 {
         fast_trial();
         return Ok(())
     }
