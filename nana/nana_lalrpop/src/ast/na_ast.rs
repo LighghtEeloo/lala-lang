@@ -211,17 +211,17 @@ mod print {
     use super::*;
     use std::fmt;
 
-    struct DebugVec<T> (Vec<T>);
-    impl<T> fmt::Debug for DebugVec<T> 
-    where T: fmt::Debug {
+    struct DebugVec<T, Sep> (Vec<T>, Sep);
+    impl<T, Sep> fmt::Debug for DebugVec<T, Sep> 
+    where T: fmt::Debug, Sep: fmt::Display {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let DebugVec(ps) = self;
+            let DebugVec(ps, s) = self;
             let mut it = ps.iter();
             if let Some(p) = it.next() {
                 write!(f, "{:#?}", p)?;
             }
             for p in it {
-                write!(f, ", {:#?}", p)?;
+                write!(f, "{} {:#?}", s, p)?;
             }
             write!(f, "")
 
@@ -285,17 +285,17 @@ mod print {
             match self {
                 Struct::Vector(v) => {
                     write!(f, "[")?;
-                    write!(f, "{:#?}", DebugVec(v.clone()))?;
+                    write!(f, "{:#?}", DebugVec(v.clone(), ","))?;
                     write!(f, "]")
                 }
                 Struct::Tuple(v) => {
                     write!(f, "(")?;
-                    write!(f, "{:#?}", DebugVec(v.clone()))?;
+                    write!(f, "{:#?}", DebugVec(v.clone(), ","))?;
                     write!(f, ")")
                 },
                 Struct::Hashmap(v) => {
                     write!(f, "{{")?;
-                    write!(f, "{:#?}", DebugVec(v.clone()))?;
+                    write!(f, "{:#?}", DebugVec(v.clone(), ","))?;
                     write!(f, "}}")
 
                 }
@@ -346,12 +346,12 @@ mod print {
                 Pattern::Exposure(ex) => write!(f, "{:#?}", ex),
                 Pattern::Vector(ps) => {
                     write!(f, "[")?;
-                    write!(f, "{:#?}", DebugVec(ps.clone()))?;
+                    write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
                     write!(f, "]")
                 }
                 Pattern::Tuple(ps) => {
                     write!(f, "(")?;
-                    write!(f, "{:#?}", DebugVec(ps.clone()))?;
+                    write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
                     write!(f, ")")
                 }
             }
@@ -365,7 +365,8 @@ mod print {
                 ExposurePattern::Binders(bs) => {
                     write!(f, "<")?;
                     write!(f, "{:#?}", DebugVec(
-                        bs.iter().cloned().map(Pattern::from).collect()
+                        bs.iter().cloned().map(Pattern::from).collect(),
+                        ";"
                     ))?;
                     write!(f, ">")
                 }
