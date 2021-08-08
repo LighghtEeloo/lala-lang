@@ -32,7 +32,7 @@ fn main() -> anyhow::Result<()> {
 fn fast_trial() {
     let file_seq = format!("{}", r#"
 ~ pi := ~ <dine> = [
-    ~ murmur := "...";
+    ~ murmur := "...\"";
     ~ id x := x;
     ~ double x := (x,x);
     ~ idd x' := [
