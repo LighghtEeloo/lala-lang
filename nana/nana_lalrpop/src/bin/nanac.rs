@@ -41,7 +41,7 @@ fn fast_trial() {
     ];
     ~ dine := ~ <*> := [
         ~ divine := [|jail|];
-        ~ divine := [1, 2, 3.0, .4, 5e1];
+        ~ divine := [1, 0x2f, 3.0, .4, 5e1];
         3.1415926
     ];
     id dine

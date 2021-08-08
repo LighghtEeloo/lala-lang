@@ -91,7 +91,12 @@ EVERYTHING: String = "*" => <>.into();
 
 INTCONST: u64 = {
     r"[0-9]+" => <>.parse::<u64>().unwrap(),
-    // r"0[xX][0-9a-fA-F]+" => <>.parse::<u64>().unwrap(),
+    r"0[xX][0-9a-fA-F]+" => {
+        let s = <>
+            .trim_start_matches("0x")
+            .trim_start_matches("0X");
+        u64::from_str_radix(s, 16).unwrap()
+    },
 };
 FLTCONST: f64 = {
     r"[0-9]*\.[0-9]+([eE][-\+]?[0-9]+)?" => <>.parse::<f64>().unwrap(),
