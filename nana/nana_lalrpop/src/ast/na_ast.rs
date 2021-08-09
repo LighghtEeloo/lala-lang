@@ -40,7 +40,7 @@ pub enum Struct {
     Hashmap(Vec<(Literal, Expr)>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Literal {
     Int(u64),
     Float(f64),
@@ -299,6 +299,17 @@ mod print {
                     write!(f, "}}")
 
                 }
+            }
+        }
+    }
+
+    impl fmt::Debug for Literal {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Literal::Int(e) => write!(f, "Int({})", e),
+                Literal::Float(e) => write!(f, "Flt({})", e),
+                Literal::Str(e) => write!(f, "Str({})", e),
+                Literal::Raw(e) => write!(f, "Raw({})", e),
             }
         }
     }
