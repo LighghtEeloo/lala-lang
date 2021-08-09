@@ -4,6 +4,7 @@ grammar;
 
 pub Nana: Nana = {
     <Expr> => <>.into(),
+    <BlockInner> => <>.into(),
 };
 
 Expr: Expr = {
@@ -16,9 +17,10 @@ Application: Application = {
 };
 
 Atom: Atom = {
-    "(" <Expr> ")" => <>.into(),
+    // Note: Now parentheses are dealt by single element tuple.
     <Block> => <>.into(),
-    // <Binder> => <>.into(), // Fixme: Binder.
+    <Struct> => <>.into(),
+    <Binder> => <>.into(),
     <Literal> => <>.into(),
 };
 
@@ -27,13 +29,20 @@ Block: Block = {
 };
 
 BlockInner: Block = {
-    <bs:Binding*> <v:Expr> => (bs, v).into(),
-    <Binding*> => <>.into(),
+    <bs:Binding+> <v:Expr> => (bs, v).into(),
+    <Binding+> => <>.into(),
+};
+
+Struct: Struct = {
+    "[" <Comma<Expr>> "]" => Struct::Vector(<>),
+    "(" <Comma<Expr>> ")" => Struct::Tuple(<>),
 };
 
 Literal: Literal = {
-    // r#"".*""# => <>.to_owned().into(),
-    r#""[^"]*""# => <>.to_owned().into(),
+    <INTCONST> => <>.into(),
+    <FLTCONST> => <>.into(),
+    <STRCONST> => <>.into(),
+    <RAWCONST> => Literal::Raw(<>.into()),
 };
 
 Binding: Binding = {
@@ -46,9 +55,10 @@ Binder: Binder = {
     // <SYMBOLIDENT> => <>.into(),
 };
 
+// Note: Head is now guarded by "~" to reduce ambiguity.
 Head: Head = {
-    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
-    <p:Pattern> <m:Mask> => (p,m).into(),
+    "~" <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
+    "~" <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
 Mask: Mask = {
@@ -61,7 +71,8 @@ Pattern: Pattern = {
     <WILDCARD> => Pattern::Arbitrary,
     "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs.into()),
     "<" <EVERYTHING> ">" => Pattern::Exposure(ExposurePattern::All),
-    "[" <ps:CommaOnce<Pattern>> "]" => Pattern::Sequence(ps), // Fixme:Sequence
+    "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
+    "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
 };
 
 
@@ -78,10 +89,25 @@ EVERYTHING: String = "*" => <>.into();
 
 // Const
 
-// INTCONST: i32 = r"[+-]?[0-9]+" => i32::from_str(<>).unwrap();
+INTCONST: u64 = {
+    r"[0-9]+" => <>.parse::<u64>().unwrap(),
+    r"0[xX][0-9a-fA-F]+" => {
+        let s = <>
+            .trim_start_matches("0x")
+            .trim_start_matches("0X");
+        u64::from_str_radix(s, 16).unwrap()
+    },
+};
+FLTCONST: f64 = {
+    r"[0-9]*\.[0-9]+([eE][-\+]?[0-9]+)?" => <>.parse::<f64>().unwrap(),
+    r"[0-9]+[eE][-\+]?[0-9]+" => <>.parse::<f64>().unwrap(),
+};
+STRCONST: String = r#""([^"\\]|\\.)*""# => <>.into();
+RAWCONST: String = r"\[\|.*\|\]" => <>.into();
 
 // Utility
 
+#[inline]
 Comma<T>: Vec<T> = {
     <mut v:(<T> ",")*> <e:T?> => match e {
         None => v,
@@ -92,6 +118,7 @@ Comma<T>: Vec<T> = {
     }
 };
 
+#[inline]
 CommaOnce<T>: Vec<T> = {
     <mut v:(<T> ",")*> <e:T> => {
         v.push(e);
@@ -99,6 +126,7 @@ CommaOnce<T>: Vec<T> = {
     }
 };
 
+#[inline]
 SemiColon<T>: Vec<T> = {
     <mut v:(<T> ";")*> <e:T?> => match e {
         None => v,
@@ -109,6 +137,7 @@ SemiColon<T>: Vec<T> = {
     }
 };
 
+#[inline]
 SemiColonOnce<T>: Vec<T> = {
     <mut v:(<T> ";")*> <e:T> => {
         v.push(e);
