@@ -16,7 +16,6 @@ pub enum Expr {
 #[derive(Clone)]
 pub enum Atom {
     Block(Block),
-    Struct(Struct),
     Binder(Binder),
     Literal(Literal),
 }
@@ -29,15 +28,28 @@ pub struct Application {
 
 #[derive(Clone)]
 pub struct Block {
+    pub computation: Computation,
     pub binder_space: Vec<Binding>,
-    pub value_space: Option<Box<Expr>>,
+    pub value_space: Vec<Molecule>,
 }
 
 #[derive(Clone)]
-pub enum Struct {
-    Vector(Vec<Expr>),
-    Tuple(Vec<Expr>),
-    Hashmap(Vec<(Literal, Expr)>),
+pub enum Computation {
+    Seq,
+    Par,
+    Sim
+}
+
+#[derive(Clone)]
+pub enum Molecule {
+    Expr(Expr),
+    Paired(Paired),
+}
+
+#[derive(Debug, Clone)]
+pub struct Paired {
+    pub key: Literal,
+    pub val: Expr,
 }
 
 #[derive(Clone)]
@@ -99,9 +111,9 @@ mod construct {
         fn from(body: Expr) -> Self { Self { body } }
     }
 
-    impl From<Block> for Nana {
-        fn from(block: Block) -> Self { 
-            Expr::from(Atom::from(block)).into()
+    impl From<(Vec<Binding>, Vec<Molecule>)> for Nana {
+        fn from(bi: (Vec<Binding>, Vec<Molecule>)) -> Self { 
+            Expr::from(Atom::from(Block::from((Computation::Par, bi)))).into()
         }
     }
 
@@ -115,9 +127,6 @@ mod construct {
     impl From<Block> for Atom {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
-    impl From<Struct> for Atom {
-        fn from(stct: Struct) -> Self { Self::Struct(stct) }
-    }
     impl From<Binder> for Atom {
         fn from(binder: Binder) -> Self { Self::Binder(binder) }
     }
@@ -125,17 +134,28 @@ mod construct {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
     }
 
-    impl From<(Vec<Binding>, Expr)> for Block {
-        fn from((binding_space, value_space): (Vec<Binding>, Expr)) -> Self { 
-            let value_space = Some(Box::new(value_space));
-            Self { binder_space: binding_space, value_space } 
+    impl From<Atom> for Application {
+        fn from(func: Atom) -> Self {
+            (func, Vec::new()).into()
         }
     }
-    impl From<Vec<Binding>> for Block {
-        fn from(binding_space: Vec<Binding>) -> Self { 
-            let value_space = None;
-            Self { binder_space: binding_space, value_space } 
+    impl From<(Atom, Vec<Atom>)> for Application {
+        fn from((func, args): (Atom, Vec<Atom>)) -> Self {
+            Self { func, args }
         }
+    }
+
+    impl From<(Computation, (Vec<Binding>, Vec<Molecule>))> for Block {
+        fn from(
+            (computation, (binder_space, value_space)): 
+            (Computation, (Vec<Binding>, Vec<Molecule>))
+        ) -> Self { 
+            Self { computation, binder_space, value_space } 
+        }
+    }
+
+    impl From<Expr> for Molecule {
+        fn from(e: Expr) -> Self { Self::Expr(e) }
     }
 
     impl From<u64> for Literal {
@@ -151,17 +171,6 @@ mod construct {
     impl From<String> for Literal {
         fn from(s: String) -> Self {
             Self::Str (s)
-        }
-    }
-
-    impl From<Atom> for Application {
-        fn from(func: Atom) -> Self {
-            (func, Vec::new()).into()
-        }
-    }
-    impl From<(Atom, Vec<Atom>)> for Application {
-        fn from((func, args): (Atom, Vec<Atom>)) -> Self {
-            Self { func, args }
         }
     }
 
@@ -252,7 +261,6 @@ mod print {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
                 Atom::Block(e) => write!(f, "{:#?}", e),
-                Atom::Struct(e) => write!(f, "{:#?}", e),
                 Atom::Binder(e) => write!(f, "{:#?}", e),
                 Atom::Literal(e) => write!(f, "{:#?}", e),
             }
@@ -271,35 +279,55 @@ mod print {
 
     impl fmt::Debug for Block {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let mut db = f.debug_list();
-            db.entries(self.binder_space.iter());
-            match &self.value_space {
-                Some(e) => db.entry(e).finish(),
-                None => db.finish()
+            match self.computation {
+                Computation::Seq => {
+                    let mut db = f.debug_list();
+                    for b in self.binder_space.iter() {
+                        db.entry(&b);
+                    }
+                    for m in self.value_space.iter() {
+                        db.entry(&m);
+                    }
+                    db.finish()
+                }
+                Computation::Par => {
+                    let mut db = f.debug_tuple("");
+                    for b in self.binder_space.iter() {
+                        db.field(&b);
+                    }
+                    for m in self.value_space.iter() {
+                        db.field(&m);
+                    }
+                    db.finish()
+                }
+                Computation::Sim => {
+                    let mut db = f.debug_map();
+                    for b in self.binder_space.iter() {
+                        db.entry(&"", &b);
+                    }
+                    for m in self.value_space.iter() {
+                        match m {
+                            Molecule::Expr(e) => {
+                                db.entry(&"", &e);
+                            }
+                            Molecule::Paired(Paired { key, val }) => {
+                                db.entry(key, val);
+                            }
+                        }
+                    }
+                    db.finish()
+                }
             }
         }
     }
 
-    impl fmt::Debug for Struct {
+    impl fmt::Debug for Molecule {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Struct::Vector(v) => {
-                    write!(f, "[")?;
-                    write!(f, "{:#?}", DebugVec(v.clone(), ","))?;
-                    write!(f, "]")
-                }
-                Struct::Tuple(v) => {
-                    write!(f, "(")?;
-                    write!(f, "{:#?}", DebugVec(v.clone(), ","))?;
-                    write!(f, ")")
-                },
-                Struct::Hashmap(v) => {
-                    write!(f, "{{")?;
-                    write!(f, "{:#?}", DebugVec(v.clone(), ","))?;
-                    write!(f, "}}")
-
-                }
+                Molecule::Expr(e) => write!(f, "{:#?}", e),
+                Molecule::Paired(_) => todo!(),
             }
+            
         }
     }
 

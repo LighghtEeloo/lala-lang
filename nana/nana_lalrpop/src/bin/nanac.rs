@@ -9,7 +9,7 @@ fn main() -> anyhow::Result<()> {
         return Ok(())
     }
 
-    // get the file[s] and combine them in parallel, and then...
+    // get the file[s] and combine them in simultaneity, and then...
 
     let mut buf = String::new();
     std::io::stdin().read_to_string(&mut buf)?;
@@ -30,8 +30,8 @@ fn main() -> anyhow::Result<()> {
 }
 
 fn fast_trial() {
-    let file_seq = format!("{}", r#"
-~ <pi> := ~ <double; id; idd> = [
+    let code = format!("{}", r#"
+~ <pi; double; id; idd> := pi_module = [
     ~ murmur := "...\"";
     ~ id x := x;
     ~ double x := (x,x);
@@ -39,17 +39,17 @@ fn fast_trial() {
         ~ (x, y) := x';
         x
     ];
-    ~ dine := ~ <*> := [
+    ~ dine := ~ <*> := (
         ~ divine := [|jail|];
         ~ divine := [1, 0x2f, 3.0, .4, 5e1];
         3.1415926
-    ];
+    );
     ~ pi := id dine;
 ];
 pi
     "#);
 
-    let res = nana::NanaParser::new().parse(&file_seq);
+    let res = nana::NanaParser::new().parse(&code);
     match res {
         Ok(res) => {
             println!("{:#?}", res);
