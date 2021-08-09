@@ -20,16 +20,19 @@ Also some "just because I can" examples:
 ### Nana
 
 Nana, a proof-of-concept language, will first be implemented, along with the following key concepts:
+
 1. Block
-    1. binder space and value space
-    2. encapsulation by mask
-    3. exposure
-2. Abstraction
-    1. currying by arg sequence
-    2. application into value space
-    3. binder as pattern
-3. Control Flow
-    1. pattern matching
+    - Obstruction
+    - Projection
+    - Exposure
+2. Value Space
+    - Literal
+    - Application
+3. Binder Space
+    - Abstraction
+    - Pattern Language
+4. Control Flow 
+    - Pattern Matching
 
 ### Lala
 
@@ -46,7 +49,7 @@ A (fake) package manager in pure lala, designed more as a structural convention 
 
 
 ## Language Proposal
-- Nana: tbd.
+- Nana: [nana-lang proposal](nana/Proposal.md).
 - Lala: [lala-lang proposal](lala/Proposal.md).
 - Dada: tbd.
 
