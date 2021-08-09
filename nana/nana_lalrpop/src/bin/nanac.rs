@@ -31,7 +31,7 @@ fn main() -> anyhow::Result<()> {
 
 fn fast_trial() {
     let file_seq = format!("{}", r#"
-~ pi := ~ <double; id; idd> = [
+~ <pi> := ~ <double; id; idd> = [
     ~ murmur := "...\"";
     ~ id x := x;
     ~ double x := (x,x);
@@ -44,7 +44,7 @@ fn fast_trial() {
         ~ divine := [1, 0x2f, 3.0, .4, 5e1];
         3.1415926
     ];
-    id dine
+    ~ pi := id dine;
 ];
 pi
     "#);
