@@ -7,6 +7,7 @@ pub struct Nana {
 pub enum Expr {
     Atom(Atom),
     Application(Application),
+    ControlFlow(ControlFlow),
 }
 
 /// A semantically minimal expr, 
@@ -25,6 +26,13 @@ pub struct Application {
     func: Atom,
     args: Vec<Atom>,
 }
+
+#[derive(Clone)]
+pub enum ControlFlow {
+    Matching(Atom, Vec<(Pattern, Atom)>),
+    // Enumeration(Expr, Vec<Expr>)
+}
+
 
 #[derive(Clone)]
 pub struct Block {
@@ -123,6 +131,9 @@ mod construct {
     impl From<Application> for Expr {
         fn from(app: Application) -> Self { Self::Application(app) }
     }
+    impl From<ControlFlow> for Expr {
+        fn from(flow: ControlFlow) -> Self { Self::ControlFlow(flow) }
+    }
 
     impl From<Block> for Atom {
         fn from(block: Block) -> Self { Self::Block(block) }
@@ -142,6 +153,12 @@ mod construct {
     impl From<(Atom, Vec<Atom>)> for Application {
         fn from((func, args): (Atom, Vec<Atom>)) -> Self {
             Self { func, args }
+        }
+    }
+
+    impl From<(Atom, Vec<(Pattern, Atom)>)> for ControlFlow {
+        fn from((e, branches): (Atom, Vec<(Pattern, Atom)>)) -> Self {
+            Self::Matching(e, branches)
         }
     }
 
@@ -250,6 +267,9 @@ mod print {
                 Expr::Atom(a) => {
                     write!(f, "{:#?}", a)
                 }
+                Expr::ControlFlow(c) => {
+                    write!(f, "{:#?}", c)
+                }
                 Expr::Application(app) => {
                     write!(f, "{:#?}", app)
                 }
@@ -274,6 +294,20 @@ mod print {
                 write!(f, " {:#?}", a)?;
             }
             write!(f, ")")
+        }
+    }
+
+    impl fmt::Debug for ControlFlow {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                ControlFlow::Matching(e, bs) => {
+                    write!(f, "? {:#?} ", e)?;
+                    for (p, e) in bs {
+                        write!(f, "| {:#?} -> {:#?} ", p, e)?;
+                    }
+                }
+            }
+            write!(f, "")
         }
     }
 

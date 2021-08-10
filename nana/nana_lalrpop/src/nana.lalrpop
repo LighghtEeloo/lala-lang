@@ -8,17 +8,26 @@ pub Nana: Nana = {
 
 Expr: Expr = {
     <Atom> => <>.into(),
+    <ControlFlow> => <>.into(),
     <Application> => <>.into(),
-};
-
-Application: Application = {
-    <func:Atom> <args:Atom+> => (func,args).into(),
 };
 
 Atom: Atom = {
     <Block> => <>.into(),
     <Binder> => <>.into(),
     <Literal> => <>.into(),
+};
+
+ControlFlow: ControlFlow = {
+    "?" <e:Atom> <bs:MatchingBranch+> => (e, bs).into(),
+};
+
+MatchingBranch: (Pattern, Atom) = {
+    "|" <p:Pattern> "->" <e:Atom> => (p, e),
+};
+
+Application: Application = {
+    <func:Atom> <args:Atom+> => (func,args).into(),
 };
 
 Block: Block = {
