@@ -36,16 +36,16 @@ pub enum ControlFlow {
 
 #[derive(Clone)]
 pub struct Block {
-    pub computation: Computation,
+    pub structure: Sturcture,
     pub binder_space: Vec<Binding>,
     pub value_space: Vec<Molecule>,
 }
 
 #[derive(Clone)]
-pub enum Computation {
-    Seq,
-    Par,
-    Sim
+pub enum Sturcture {
+    Sum,
+    Product,
+    Labeled
 }
 
 #[derive(Clone)]
@@ -121,7 +121,7 @@ mod construct {
 
     impl From<(Vec<Binding>, Vec<Molecule>)> for Nana {
         fn from(bi: (Vec<Binding>, Vec<Molecule>)) -> Self { 
-            Expr::from(Atom::from(Block::from((Computation::Par, bi)))).into()
+            Expr::from(Atom::from(Block::from((Sturcture::Product, bi)))).into()
         }
     }
 
@@ -162,12 +162,12 @@ mod construct {
         }
     }
 
-    impl From<(Computation, (Vec<Binding>, Vec<Molecule>))> for Block {
+    impl From<(Sturcture, (Vec<Binding>, Vec<Molecule>))> for Block {
         fn from(
             (computation, (binder_space, value_space)): 
-            (Computation, (Vec<Binding>, Vec<Molecule>))
+            (Sturcture, (Vec<Binding>, Vec<Molecule>))
         ) -> Self { 
-            Self { computation, binder_space, value_space } 
+            Self { structure: computation, binder_space, value_space } 
         }
     }
 
@@ -313,8 +313,8 @@ mod print {
 
     impl fmt::Debug for Block {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self.computation {
-                Computation::Seq => {
+            match self.structure {
+                Sturcture::Sum => {
                     let mut db = f.debug_list();
                     for b in self.binder_space.iter() {
                         db.entry(&b);
@@ -324,7 +324,7 @@ mod print {
                     }
                     db.finish()
                 }
-                Computation::Par => {
+                Sturcture::Product => {
                     let mut db = f.debug_tuple("");
                     for b in self.binder_space.iter() {
                         db.field(&b);
@@ -334,7 +334,7 @@ mod print {
                     }
                     db.finish()
                 }
-                Computation::Sim => {
+                Sturcture::Labeled => {
                     let mut db = f.debug_map();
                     for b in self.binder_space.iter() {
                         db.entry(&"", &b);

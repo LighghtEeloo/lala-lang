@@ -31,9 +31,9 @@ Application: Application = {
 };
 
 Block: Block = {
-    "[" <BlockInner> "]" => (Computation::Seq, <>).into(),
-    "(" <BlockInner> ")" => (Computation::Par, <>).into(),
-    "{" <BlockInner> "}" => (Computation::Sim, <>).into(),
+    "[" <BlockInner> "]" => (Sturcture::Sum, <>).into(),
+    "(" <BlockInner> ")" => (Sturcture::Product, <>).into(),
+    "{" <BlockInner> "}" => (Sturcture::Labeled, <>).into(),
 };
 
 BlockInner: (Vec<Binding>, Vec<Molecule>) = {

@@ -52,17 +52,6 @@ fn code_base() -> Vec<String> {
 );
     "#),
     format!("{}", r#"
-~ qsort xs := (
-    ? xs
-    | [] -> []
-    | [x] + xs -> (
-        ~ (s, l) = partition ((>) x) xs;
-        (qsort s) + [x] + (qsort l)
-    )
-);
-qsort [1,3,4,2,5]
-    "#),
-    format!("{}", r#"
 ~ partition f xs := (
     ~ _part xs a b = (
         ? xs
@@ -76,6 +65,17 @@ qsort [1,3,4,2,5]
     );
     _part xs [] []
 );
+    "#),
+    format!("{}", r#"
+~ qsort xs := (
+    ? xs
+    | [] -> []
+    | [x] + xs -> (
+        ~ (s, l) = partition ((>) x) xs;
+        (qsort s) + [x] + (qsort l)
+    )
+);
+qsort [1,3,4,2,5]
     "#),
     format!("{}", r#"
 ~ range n := (
