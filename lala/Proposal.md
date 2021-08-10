@@ -15,9 +15,15 @@ List of Expression
     - Obstruction
     - Projection
     - Exposure
-3. Context System
-    - Abstraction
+3. Value Space
+    - Literal
     - Application
+4. Binder Space
+    - Abstraction
+    - Pattern Language
+4. Control Flow 
+    - Pattern Matching
+    - Pattern Enumeration
 
 where
 
