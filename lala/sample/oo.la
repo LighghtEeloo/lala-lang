@@ -1,0 +1,33 @@
+~ student <name; sleep; ability; gpa> := [
+    ~ study := (
+        ?? sleep 
+        | name + " doesn't want to study." 
+        | name + " is diligent!"
+    );
+    ~ exam hardcore := (
+        ~ base = (
+            ?? gpa >= 4.0
+            | ability
+            | (
+                ?? sleep
+                | ability - hardcore
+                | ability - 2 * hardcore
+            )
+        );
+        ?? base > 0
+        | base
+        | 0
+    );
+];
+
+~ hcz := student [
+    ~ name := "hcz";
+    ~ sleep := 0;
+    ~ ability := 100;
+    ~ gpa := 4.3;
+];
+
+{
+    "study_status": hcz.study,
+    "exam_result": hcz.exam 100,
+}

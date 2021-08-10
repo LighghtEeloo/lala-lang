@@ -1,0 +1,24 @@
+~ partition f xs := (
+    ~ _part xs a b = (
+        ? xs
+        | [] -> (a, b)
+        | [x] + xs -> (
+            ~ (a, b) = _part xs a b;
+            ?? (f x) 
+            | (a + [x], b) 
+            | (a, b + [x])
+        )
+    );
+    _part xs [] []
+);
+
+~ qsort xs := (
+    ? xs
+    | [] -> []
+    | [x] + xs -> (
+        ~ (s, l) = partition ((>) x) xs;
+        (qsort s) + [x] + (qsort l)
+    )
+);
+
+qsort [1,3,4,2,5]

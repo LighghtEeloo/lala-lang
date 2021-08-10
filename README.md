@@ -12,8 +12,66 @@ Some examples will be provided here as an introduction to lala.
 - lala4yaml
 
 Also some "just because I can" examples:
-- lala as fp
-- lala with oo
+
+### Functional Programming in Nana
+
+```lala
+~ qsort xs := (
+    ? xs
+    | [] -> []
+    | [x] + xs -> (
+        ~ (s, l) = partition ((>) x) xs;
+        (qsort s) + [x] + (qsort l)
+    )
+);
+qsort [1,3,4,2,5]
+```
+
+### Object-Oriented Programming in Nana
+
+```lala
+~ student <name; sleep; ability; gpa> := [
+    ~ study := (
+        ?? sleep 
+        | name + " doesn't want to study." 
+        | name + " is diligent!"
+    );
+    ~ exam hardcore := (
+        ~ base = (
+            ?? gpa >= 4.0
+            | ability
+            | (
+                ?? sleep
+                | ability - hardcore
+                | ability - 2 * hardcore
+            )
+        );
+        ?? base > 0
+        | base
+        | 0
+    );
+];
+
+~ hcz := student [
+    ~ name := "hcz";
+    ~ sleep := 0;
+    ~ ability := 100;
+    ~ gpa := 4.3;
+];
+
+{
+    "study_status": hcz.study,
+    "exam_result": hcz.exam 100,
+}
+```
+
+the result is
+```json
+{
+    "study_status": "hcz doesn't want to study.",
+    "exam_result": 100
+}
+```
 
 ## Roadmap
 

@@ -3,39 +3,45 @@ use crate::na_ast::*;
 grammar;
 
 pub Nana: Nana = {
-    <Expr> => <>.into(),
     <BlockInner> => <>.into(),
 };
 
 Expr: Expr = {
     <Atom> => <>.into(),
+    <ControlFlow> => <>.into(),
     <Application> => <>.into(),
+};
+
+Atom: Atom = {
+    <Block> => <>.into(),
+    <Binder> => <>.into(),
+    <Literal> => <>.into(),
+};
+
+ControlFlow: ControlFlow = {
+    "?" <e:Atom> <bs:MatchingBranch+> => (e, bs).into(),
+};
+
+MatchingBranch: (Pattern, Atom) = {
+    "|" <p:Pattern> "->" <e:Atom> => (p, e),
 };
 
 Application: Application = {
     <func:Atom> <args:Atom+> => (func,args).into(),
 };
 
-Atom: Atom = {
-    // Note: Now parentheses are dealt by single element tuple.
-    <Block> => <>.into(),
-    <Struct> => <>.into(),
-    <Binder> => <>.into(),
-    <Literal> => <>.into(),
-};
-
 Block: Block = {
-    "[" <BlockInner> "]" => <>.into(),
+    "[" <BlockInner> "]" => (Sturcture::Sum, <>).into(),
+    "(" <BlockInner> ")" => (Sturcture::Product, <>).into(),
+    "{" <BlockInner> "}" => (Sturcture::Labeled, <>).into(),
 };
 
-BlockInner: Block = {
-    <bs:Binding+> <v:Expr> => (bs, v).into(),
-    <Binding+> => <>.into(),
+BlockInner: (Vec<Binding>, Vec<Molecule>) = {
+    <bs:Binding*> <ms:Comma<Molecule>> => (bs, ms),
 };
 
-Struct: Struct = {
-    "[" <Comma<Expr>> "]" => Struct::Vector(<>),
-    "(" <Comma<Expr>> ")" => Struct::Tuple(<>),
+Molecule: Molecule = {
+    <Expr> => <>.into()
 };
 
 Literal: Literal = {
