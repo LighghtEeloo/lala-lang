@@ -92,7 +92,7 @@ Pattern: Pattern = {
 
 ExposurePattern: ExposurePattern = {
     <SemiColonOnce<Binder>> => <>.into(),
-    <EVERYTHING> => ExposurePattern::All,
+    <FORTHEREST> => ExposurePattern::All,
 };
 
 
@@ -102,7 +102,6 @@ IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 UIDENT: String = r"_[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 WILDCARD: String = "_" => <>.into();
 FORTHEREST: String = ".." => <>.into();
-EVERYTHING: String = "*" => <>.into();
 SYMBOLIDENT: String = "(" <syn:r"[~!@#$%^&/\?\|\+\*]"> ")" => syn.into(); // Todo: [+-*/~!$%&]
 
 

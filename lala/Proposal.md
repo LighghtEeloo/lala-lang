@@ -361,7 +361,7 @@ _ +[c]
 
 /* deconstruct a block */
 <a;b;c>
-<*>
+<..>
 ```
 
 Notice that there's little `;` in pattern language because `,` looks better (kidding). In fact, the design principle traces back to the difference between binder space and value space. Almost all patterns are dealing with values, so `,` appears everywhere, except `<a; b; c>` as it deals with binder space elimination.

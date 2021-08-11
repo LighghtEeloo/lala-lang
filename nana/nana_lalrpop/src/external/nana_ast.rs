@@ -429,7 +429,7 @@ mod print {
                     ))?;
                     write!(f, ">")
                 }
-                ExposurePattern::All => write!(f, "<*>"),
+                ExposurePattern::All => write!(f, "<..>"),
             }
         }
     }

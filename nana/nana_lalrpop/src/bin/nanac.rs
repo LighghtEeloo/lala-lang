@@ -48,7 +48,7 @@ fn code_base() -> Vec<String> {
             ~ (x, y) := x';
             x
         ];
-        ~ dine := ~ <*> := (
+        ~ dine := ~ <..> := (
             ~ divine := [|jail|];
             ~ divine := [1, 0x2f, 3.0, .4, 5e1];
             3.1415926
