@@ -29,7 +29,7 @@ pub struct Application {
 
 #[derive(Clone)]
 pub enum ControlFlow {
-    Matching(Atom, Vec<(Pattern, Atom)>),
+    Matching(Box<Expr>, Vec<(Pattern, Expr)>),
     // Enumeration(Expr, Vec<Expr>)
 }
 
@@ -156,9 +156,9 @@ mod construct {
         }
     }
 
-    impl From<(Atom, Vec<(Pattern, Atom)>)> for ControlFlow {
-        fn from((e, branches): (Atom, Vec<(Pattern, Atom)>)) -> Self {
-            Self::Matching(e, branches)
+    impl From<(Expr, Vec<(Pattern, Expr)>)> for ControlFlow {
+        fn from((e, branches): (Expr, Vec<(Pattern, Expr)>)) -> Self {
+            Self::Matching(Box::new(e), branches)
         }
     }
 

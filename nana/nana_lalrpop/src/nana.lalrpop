@@ -7,8 +7,12 @@ pub Nana: Nana = {
 };
 
 Expr: Expr = {
-    <Atom> => <>.into(),
+    <AppExpr>,
     <ControlFlow> => <>.into(),
+};
+
+AppExpr: Expr = {
+    <Atom> => <>.into(),
     <Application> => <>.into(),
 };
 
@@ -19,11 +23,11 @@ Atom: Atom = {
 };
 
 ControlFlow: ControlFlow = {
-    "?" <e:Atom> <bs:MatchingBranch+> => (e, bs).into(),
+    "?" <e:AppExpr> <bs:MatchingBranch+> => (e, bs).into(),
 };
 
-MatchingBranch: (Pattern, Atom) = {
-    "|" <p:Pattern> "->" <e:Atom> => (p, e),
+MatchingBranch: (Pattern, Expr) = {
+    "|" <p:Pattern> "->" <e:AppExpr> => (p, e),
 };
 
 Application: Application = {
