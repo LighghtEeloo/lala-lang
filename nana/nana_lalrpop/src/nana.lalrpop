@@ -12,15 +12,15 @@ Expr: Expr = {
 };
 
 AppExpr: Expr = {
-    <Atom> => <>.into(),
+    <AtomExpr> => <>.into(),
     <Application> => <>.into(),
 };
 
 /// A semantically minimal expr, 
-/// meaning that Atom must be associated within itself.
+/// meaning that AtomExpr must be associated within itself.
 ///
 /// Note that `()` wrapped expr is now in Struct(Tuple).
-Atom: Expr = {
+AtomExpr: Expr = {
     <Block> => <>.into(),
     <Binder> => <>.into(),
     <Literal> => <>.into(),
@@ -35,7 +35,7 @@ MatchingBranch: (Pattern, Expr) = {
 };
 
 Application: Application = {
-    <func:Atom> <args:Atom+> => (func,args).into(),
+    <func:AtomExpr> <args:AtomExpr+> => (func,args).into(),
 };
 
 Block: Block = {
@@ -66,7 +66,7 @@ Binding: Binding = {
 Binder: Binder = {
     <IDENT> => <>.into(),
     <UIDENT> => <>.into(),
-    // <SYMBOLIDENT> => <>.into(),
+    <SYMBOLIDENT> => <>.into(),
 };
 
 // Note: Head is now guarded by "~" to reduce ambiguity.
@@ -98,7 +98,7 @@ IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 UIDENT: String = r"_[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 WILDCARD: String = "_" => <>.into();
 EVERYTHING: String = "*" => <>.into();
-// SYMBOLIDENT: String = "(" <syn:r"-"> ")" => syn.into(); // Todo: [+-*/~!$%&]
+SYMBOLIDENT: String = "(" <syn:r"[~!@#$%^&/\?\|\+\*]"> ")" => syn.into(); // Todo: [+-*/~!$%&]
 
 
 // Const
