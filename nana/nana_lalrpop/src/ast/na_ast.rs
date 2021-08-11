@@ -5,17 +5,8 @@ pub struct Nana {
 
 #[derive(Clone)]
 pub enum Expr {
-    Atom(Atom),
     Application(Application),
     ControlFlow(ControlFlow),
-}
-
-/// A semantically minimal expr, 
-/// meaning that Atom must be associated within itself.
-///
-/// Note that `()` wrapped expr is now in Struct(Tuple).
-#[derive(Clone)]
-pub enum Atom {
     Block(Block),
     Binder(Binder),
     Literal(Literal),
@@ -23,8 +14,8 @@ pub enum Atom {
 
 #[derive(Clone)]
 pub struct Application {
-    func: Atom,
-    args: Vec<Atom>,
+    func: Box<Expr>,
+    args: Vec<Expr>,
 }
 
 #[derive(Clone)]
@@ -121,37 +112,34 @@ mod construct {
 
     impl From<(Vec<Binding>, Vec<Molecule>)> for Nana {
         fn from(bi: (Vec<Binding>, Vec<Molecule>)) -> Self { 
-            Expr::from(Atom::from(Block::from((Sturcture::Product, bi)))).into()
+            Expr::from(Block::from((Sturcture::Product, bi))).into()
         }
     }
 
-    impl From<Atom> for Expr {
-        fn from(atom: Atom) -> Self { Self::Atom(atom) }
-    }
     impl From<Application> for Expr {
         fn from(app: Application) -> Self { Self::Application(app) }
     }
     impl From<ControlFlow> for Expr {
         fn from(flow: ControlFlow) -> Self { Self::ControlFlow(flow) }
     }
-
-    impl From<Block> for Atom {
+    impl From<Block> for Expr {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
-    impl From<Binder> for Atom {
+    impl From<Binder> for Expr {
         fn from(binder: Binder) -> Self { Self::Binder(binder) }
     }
-    impl From<Literal> for Atom {
+    impl From<Literal> for Expr {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
     }
 
-    impl From<Atom> for Application {
-        fn from(func: Atom) -> Self {
+    impl From<Expr> for Application {
+        fn from(func: Expr) -> Self {
             (func, Vec::new()).into()
         }
     }
-    impl From<(Atom, Vec<Atom>)> for Application {
-        fn from((func, args): (Atom, Vec<Atom>)) -> Self {
+    impl From<(Expr, Vec<Expr>)> for Application {
+        fn from((func, args): (Expr, Vec<Expr>)) -> Self {
+            let func = Box::new(func);
             Self { func, args }
         }
     }
@@ -264,25 +252,15 @@ mod print {
     impl fmt::Debug for Expr {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Expr::Atom(a) => {
-                    write!(f, "{:#?}", a)
-                }
-                Expr::ControlFlow(c) => {
+                Self::ControlFlow(c) => {
                     write!(f, "{:#?}", c)
                 }
-                Expr::Application(app) => {
+                Self::Application(app) => {
                     write!(f, "{:#?}", app)
                 }
-            }
-        }
-    }
-
-    impl fmt::Debug for Atom {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Atom::Block(e) => write!(f, "{:#?}", e),
-                Atom::Binder(e) => write!(f, "{:#?}", e),
-                Atom::Literal(e) => write!(f, "{:#?}", e),
+                Self::Block(e) => write!(f, "{:#?}", e),
+                Self::Binder(e) => write!(f, "{:#?}", e),
+                Self::Literal(e) => write!(f, "{:#?}", e),
             }
         }
     }

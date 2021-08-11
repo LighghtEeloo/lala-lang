@@ -16,7 +16,11 @@ AppExpr: Expr = {
     <Application> => <>.into(),
 };
 
-Atom: Atom = {
+/// A semantically minimal expr, 
+/// meaning that Atom must be associated within itself.
+///
+/// Note that `()` wrapped expr is now in Struct(Tuple).
+Atom: Expr = {
     <Block> => <>.into(),
     <Binder> => <>.into(),
     <Literal> => <>.into(),
