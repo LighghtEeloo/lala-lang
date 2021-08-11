@@ -1,5 +1,7 @@
-pub mod ast;
-pub use ast::*;
+mod external;
+mod resolve;
+use external::nana_ast;
+
 
 #[macro_use] extern crate lalrpop_util;
 lalrpop_mod!(pub nana);
