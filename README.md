@@ -113,3 +113,5 @@ A (fake) package manager in pure lala, designed more as a structural convention 
 
 ## Current Progress
 Using [lalrpop](https://github.com/lalrpop/lalrpop) as nana/lala's parser to Rust.
+
+Also here is a [todo list](Todo.md).

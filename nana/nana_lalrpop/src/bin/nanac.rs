@@ -6,7 +6,7 @@ fn main() -> anyhow::Result<()> {
 
     if std::env::args().len() > 1 {
         for (i, code) in code_base().iter().enumerate() {
-            println!(">>>>>> Parsing: Case {}", i);
+            println!(">>>>>> Parsing: Case {} >>>>>>", i);
             parse_nana(code);
         }
         return Ok(())
@@ -21,6 +21,21 @@ fn main() -> anyhow::Result<()> {
     
     Ok(())
 }
+
+
+fn parse_nana(code: &String) {
+    let res = nana::NanaParser::new().parse(code);
+    match res {
+        Ok(res) => {
+            println!("{:#?}", res);
+        }
+        Err(e) => {
+            println!("Error: {}", e);
+        }
+    }
+    println!("{}", "=".repeat(80));
+}
+
 
 fn code_base() -> Vec<String> {
     vec![ format!("{}", r#"
@@ -90,17 +105,3 @@ qsort [1,3,4,2,5]
     "#),
     ]
 } 
-
-fn parse_nana(code: &String) {
-    let res = nana::NanaParser::new().parse(code);
-    println!("{}", "=".repeat(80));
-    match res {
-        Ok(res) => {
-            println!("{:#?}", res);
-        }
-        Err(e) => {
-            println!("Error: {}", e);
-        }
-    }
-    println!("{}", "=".repeat(80));
-}
