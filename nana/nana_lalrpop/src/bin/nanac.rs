@@ -67,6 +67,14 @@ fn code_base() -> Vec<String> {
 );
     "#),
     format!("{}", r#"
+~ pattern_map xs := (
+    ? xs
+    | { "hey", "yes" } -> []
+    | { "x" } -> [y, x]
+    | _ -> [xs]
+);
+    "#),
+    format!("{}", r#"
 ~ partition f xs := (
     ~ _part xs a b = (
         ? xs
