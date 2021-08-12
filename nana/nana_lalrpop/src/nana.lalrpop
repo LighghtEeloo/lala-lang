@@ -39,13 +39,13 @@ Application: Application = {
 };
 
 Block: Block = {
-    "[" <BlockInner> "]" => Block::Vector(BlockInner::<Vector>::from(<>)),
-    "(" <BlockInner> ")" => Block::Tuple(BlockInner::<Tuple>::from(<>)),
-    "{" <BlockInner> "}" => Block::Labeled(BlockInner::<Labeled>::from(<>)),
+    "[" <BlockInner> "]" => Block::Vector(<>),
+    "(" <BlockInner> ")" => Block::Tuple(<>),
+    "{" <BlockInner> "}" => Block::Labeled(<>),
 };
 
-BlockInner: (Vec<Binding>, Vec<Molecule>) = {
-    <bs:Binding*> <ms:Comma<Molecule>> => (bs, ms),
+BlockInner: BlockInner = {
+    <bs:Binding*> <ms:Comma<Molecule>> => (bs, ms).into(),
 };
 
 Molecule: Molecule = {

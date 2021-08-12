@@ -28,27 +28,16 @@ pub enum ControlFlow {
 
 #[derive(Clone)]
 pub enum Block {
-    Vector(BlockInner<Vector>),
-    Tuple(BlockInner<Tuple>),
-    Labeled(BlockInner<Labeled>),
+    Vector(BlockInner),
+    Tuple(BlockInner),
+    Labeled(BlockInner),
 }
 
 #[derive(Clone)]
-pub struct BlockInner<Structure> {
-    pub structure: Structure,
+pub struct BlockInner {
     pub binder_space: Vec<Binding>,
     pub value_space: Vec<Molecule>,
 }
-
-#[derive(Clone)]
-pub struct Vector;
-
-#[derive(Clone)]
-pub struct Tuple;
-
-#[derive(Clone)]
-pub struct Labeled;
-
 
 #[derive(Clone)]
 pub enum Molecule {
@@ -125,8 +114,8 @@ mod construct {
         fn from(body: Expr) -> Self { Self { body } }
     }
 
-    impl From<(Vec<Binding>, Vec<Molecule>)> for Nana {
-        fn from(bi: (Vec<Binding>, Vec<Molecule>)) -> Self { 
+    impl From<BlockInner> for Nana {
+        fn from(bi: BlockInner) -> Self { 
             Expr::from(Block::from(bi)).into()
         }
     }
@@ -178,33 +167,17 @@ mod construct {
         }
     }
 
-    impl From<(Vec<Binding>, Vec<Molecule>)> for Block {
-        fn from(
-            (binder_space, value_space): (Vec<Binding>, Vec<Molecule>)
-        ) -> Self { 
-            Self::Tuple(BlockInner::<Tuple>::from((binder_space, value_space)))
+    impl From<BlockInner> for Block {
+        fn from(bi: BlockInner) -> Self { 
+            Self::Tuple(bi)
         }
     }
 
-    impl From<(Vec<Binding>, Vec<Molecule>)> for BlockInner<Vector> {
+    impl From<(Vec<Binding>, Vec<Molecule>)> for BlockInner {
         fn from(
             (binder_space, value_space): (Vec<Binding>, Vec<Molecule>)
         ) -> Self { 
-            Self { structure: Vector, binder_space, value_space } 
-        }
-    }
-    impl From<(Vec<Binding>, Vec<Molecule>)> for BlockInner<Tuple> {
-        fn from(
-            (binder_space, value_space): (Vec<Binding>, Vec<Molecule>)
-        ) -> Self { 
-            Self { structure: Tuple, binder_space, value_space } 
-        }
-    }
-    impl From<(Vec<Binding>, Vec<Molecule>)> for BlockInner<Labeled> {
-        fn from(
-            (binder_space, value_space): (Vec<Binding>, Vec<Molecule>)
-        ) -> Self { 
-            Self { structure: Labeled, binder_space, value_space } 
+            Self { binder_space, value_space } 
         }
     }
 
@@ -316,19 +289,6 @@ mod print {
         }
     }
 
-    trait Delimiter {
-        fn delimiter(&self) -> (&str, &str);
-    }
-    impl Delimiter for Vector {
-        fn delimiter(&self) -> (&str, &str) { ("[", "]") }
-    }
-    impl Delimiter for Tuple {
-        fn delimiter(&self) -> (&str, &str) { ("(", ")") }
-    }
-    impl Delimiter for Labeled {
-        fn delimiter(&self) -> (&str, &str) { ("{", "}") }
-    }
-
     impl fmt::Debug for Nana {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "Nana ")?;
@@ -378,101 +338,47 @@ mod print {
     impl fmt::Debug for Block {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Block::Vector(v) => write!(f, "{:#?}", v),
-                Block::Tuple(t) => write!(f, "{:#?}", t),
-                Block::Labeled(l) => write!(f, "{:#?}", l),
-            }
-        }
-    }
-
-    impl fmt::Debug for BlockInner<Vector> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let mut db = f.debug_list();
-            for b in self.binder_space.iter() {
-                db.entry(&b);
-            }
-            for m in self.value_space.iter() {
-                db.entry(&m);
-            }
-            db.finish()
-        }
-    }
-    impl fmt::Debug for BlockInner<Tuple> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let mut db = f.debug_tuple("");
-            for b in self.binder_space.iter() {
-                db.field(&b);
-            }
-            for m in self.value_space.iter() {
-                db.field(&m);
-            }
-            db.finish()
-        }
-    }
-    impl fmt::Debug for BlockInner<Labeled> {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let mut db = f.debug_map();
-            for b in self.binder_space.iter() {
-                db.entry(&"", &b);
-            }
-            for m in self.value_space.iter() {
-                match m {
-                    Molecule::Expr(e) => {
-                        db.entry(&"", &e);
+                Block::Vector(blk) => {
+                    let mut db = f.debug_list();
+                    for b in blk.binder_space.iter() {
+                        db.entry(&b);
                     }
-                    Molecule::Paired(Paired { key, val }) => {
-                        db.entry(key, val);
+                    for m in blk.value_space.iter() {
+                        db.entry(&m);
                     }
+                    db.finish()
+                }
+                Block::Tuple(blk) => {
+                    let mut db = f.debug_tuple("");
+                    for b in blk.binder_space.iter() {
+                        db.field(&b);
+                    }
+                    for m in blk.value_space.iter() {
+                        db.field(&m);
+                    }
+                    db.finish()
+                }
+                Block::Labeled(blk) => {
+                    let mut db = f.debug_map();
+                    for b in blk.binder_space.iter() {
+                        db.entry(&"", &b);
+                    }
+                    for m in blk.value_space.iter() {
+                        match m {
+                            Molecule::Expr(e) => {
+                                db.entry(&"", &e);
+                            }
+                            Molecule::Paired(Paired { key, val }) => {
+                                db.entry(key, val);
+                            }
+                        }
+                    }
+                    db.finish()
                 }
             }
-            db.finish()
         }
     }
 
-    // impl<T> fmt::Debug for BlockInner<T> 
-    // where T: Delimiter {
-    //     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    //         match self.structure {
-    //             Sturcture::Sum => {
-    //                 let mut db = f.debug_list();
-    //                 for b in self.binder_space.iter() {
-    //                     db.entry(&b);
-    //                 }
-    //                 for m in self.value_space.iter() {
-    //                     db.entry(&m);
-    //                 }
-    //                 db.finish()
-    //             }
-    //             Sturcture::Product => {
-    //                 let mut db = f.debug_tuple("");
-    //                 for b in self.binder_space.iter() {
-    //                     db.field(&b);
-    //                 }
-    //                 for m in self.value_space.iter() {
-    //                     db.field(&m);
-    //                 }
-    //                 db.finish()
-    //             }
-    //             Sturcture::Labeled => {
-    //                 let mut db = f.debug_map();
-    //                 for b in self.binder_space.iter() {
-    //                     db.entry(&"", &b);
-    //                 }
-    //                 for m in self.value_space.iter() {
-    //                     match m {
-    //                         Molecule::Expr(e) => {
-    //                             db.entry(&"", &e);
-    //                         }
-    //                         Molecule::Paired(Paired { key, val }) => {
-    //                             db.entry(key, val);
-    //                         }
-    //                     }
-    //                 }
-    //                 db.finish()
-    //             }
-    //         }
-    //     }
-    // }
 
     impl fmt::Debug for Molecule {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
