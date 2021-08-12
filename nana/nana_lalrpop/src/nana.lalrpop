@@ -49,8 +49,13 @@ BlockInner: (Vec<Binding>, Vec<Molecule>) = {
 };
 
 Molecule: Molecule = {
-    <Expr> => <>.into()
+    <Expr> => <>.into(),
+    <Paired> => <>.into(),
 };
+
+Paired: Paired = {
+    <k:AppExpr> ":" <v:Expr> => (k, v).into(),
+}
 
 Literal: Literal = {
     <INTCONST> => <>.into(),

@@ -48,7 +48,7 @@ pub enum Molecule {
 
 #[derive(Debug, Clone)]
 pub struct Paired {
-    pub key: Literal,
+    pub key: Expr,
     pub val: Expr,
 }
 
@@ -178,6 +178,15 @@ mod construct {
 
     impl From<Expr> for Molecule {
         fn from(e: Expr) -> Self { Self::Expr(e) }
+    }
+    impl From<Paired> for Molecule {
+        fn from(p: Paired) -> Self { Self::Paired(p) }
+    }
+
+    impl From<(Expr, Expr)> for Paired {
+        fn from((key, val): (Expr, Expr)) -> Self {
+            Self { key, val }
+        }
     }
 
     impl From<u64> for Literal {
