@@ -150,97 +150,13 @@ map  := {
 
 // Todo: List is more of a vector, for easier usage (?: doubly-linked list)
 
-// Todo: Array treated as Tuple
 
-// Todo: Set treated as Map (?)
 
 ## Binder Space and Value Space
 
 We use different separators for the two spaces. `;` acts upon the binder space, standing for a pulse of computation. an operation that don't show effect by returning value, and a reusable piece of code; while `,` acts upon the value space, standing for conjunction and product of values, and construction or deconstruction of things. 
 
-// Todo..
 
-### Effect Shift
-
-```lala
-data := ![
-    alice  := "kawaii";
-    ehaema := "elegant";
-    carol  := [ alice; ehaema ];
-];
-```
-
-is effectively
-
-```lala
-data := {
-    "alice"  : "kawaii",
-    "ehaema" : "elegant",
-    "carol"  : [
-        "kawaii",
-        "elegant"
-    ],
-};
-```
-
-## Exposure
-
-// Todo..
-
-```lala
-data := [
-    a := [];
-    b := [];
-];
-<data>;
-```
-
-is equal to 
-
-```lala
-a := [];
-b := [];
-```
-
-note that
-
-```lala
-data == [<data>];
-```
-
-// Note: Exposure with take out pattern?
-
-```lala
-<a; b; c> := data;
-/* equals to */
-_ := <a; b; c> = data;
-```
-
-## Abstraction
-
-Abstraction is so common and signaficant in programming languages, but it's so hard to do it right. 
-
-// Todo: example of function argument evaluation order.
-
-// Todo..
-
-### Binder and Binding
-
-// Todo..
-
-Note that a binder can be binded to any expression except an abstraction
-
-```lala
-f := g := []; /* invalid */
-```
-
-since it's not making any sense. If one insist, one should write the following instead.
-
-```lala
-f := [
-    g := [];
-];
-```
 
 ### Projection
 
@@ -284,9 +200,53 @@ Thus `=` binders can't be projected to outside the containing block, while `:=` 
 
 Note that binders appear in the form of patterns.
 
-### Currying
+// Todo..
 
-// Todo: Sequential is currying
+### Effect Shift
+
+```lala
+data := ![
+    alice  := "kawaii";
+    ehaema := "elegant";
+    carol  := [ alice; ehaema ];
+];
+```
+
+is effectively
+
+```lala
+data := {
+    "alice"  : "kawaii",
+    "ehaema" : "elegant",
+    "carol"  : [
+        "kawaii",
+        "elegant"
+    ],
+};
+```
+
+## Exposure
+
+
+```lala
+<a; b; c> := data;
+/* equals to */
+_ := <a; b; c> = data;
+```
+
+## Abstraction
+
+### Binder and Binding
+
+// Todo..
+
+A binder can be binded to any expression.
+
+```lala
+f := g := [];
+```
+
+### Currying
 
 ```lala
 add x y := x + y;   /* function definition `add` */
@@ -320,6 +280,21 @@ f <x;y;z> := <res> = [
 ```
 
 because `res` would be ambiguous.
+
+### Evaluation Order
+
+Abstraction is so common and signaficant in programming languages, but it's unbelievably hard to do it right. 
+
+// Todo: example of function argument evaluation order.
+
+However, in lala you can explictly denote the evaluation order by passing arguments in different ways.
+
+```lala
+f  x y z  := () /* z -> y -> x -> (f  x y z ) */
+f [x,y,z] := () /* x -> y -> z -> (f [x,y,z]) */
+f (x,y,z) := () /* (x,y,z), parallel  -> (f (x,y,z)) */
+f <x;y;z> := () /* <x;y;z>, preserved -> (f <x;y;z>) */
+```
 
 
 ## Pattern Language
