@@ -84,14 +84,14 @@ Pattern: Pattern = {
     <Binder> => Pattern::Binder(<>),
     <WILDCARD> => Pattern::Wild,
     <FORTHEREST> => Pattern::Rest,
-    "<" <ExposurePattern> ">" => Pattern::Exposure(<>),
+    "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
     "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
     "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
     "{" <ps:Comma<AppExpr>> "}" => Pattern::HashMap(ps),
 };
 
 ExposurePattern: ExposurePattern = {
-    <SemiColonOnce<Binder>> => <>.into(),
+    <Binder> => ExposurePattern::Binder(<>),
     <FORTHEREST> => ExposurePattern::All,
 };
 

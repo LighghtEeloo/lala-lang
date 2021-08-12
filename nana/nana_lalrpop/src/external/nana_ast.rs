@@ -92,7 +92,7 @@ pub enum Pattern {
     Binder(Binder),
     Wild,
     Rest,
-    Exposure(ExposurePattern),
+    Exposure(Vec<ExposurePattern>),
     Vector(Vec<Pattern>),
     Tuple(Vec<Pattern>),
     HashMap(Vec<Expr>),
@@ -100,7 +100,7 @@ pub enum Pattern {
 
 #[derive(Clone)]
 pub enum ExposurePattern {
-    Binders(Vec<Binder>),
+    Binder(Binder),
     All
 }
 
@@ -210,14 +210,6 @@ mod construct {
             let args = Pattern::Vector(args);
             Self::Fun { binder, args, mask }
         }
-    }
-
-    impl From<Binder> for Pattern {
-        fn from(b: Binder) -> Self { Self::Binder(b) }
-    }
-
-    impl From<Vec<Binder>> for ExposurePattern {
-        fn from(binders: Vec<Binder>) -> Self { Self::Binders(binders) }
     }
 }
 
@@ -397,7 +389,14 @@ mod print {
                 Pattern::Binder(b) => write!(f, "{:#?}", b),
                 Pattern::Wild => write!(f, "_"),
                 Pattern::Rest => write!(f, ".."),
-                Pattern::Exposure(ex) => write!(f, "{:#?}", ex),
+                Pattern::Exposure(ex) => {
+                    write!(f, "<")?;
+                    write!(f, "{:#?}", DebugVec(
+                        ex.iter().cloned().collect(),
+                        ";"
+                    ))?;
+                    write!(f, ">")        
+                }
                 Pattern::Vector(ps) => {
                     write!(f, "[")?;
                     write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
@@ -417,19 +416,11 @@ mod print {
         }
     }
 
-
     impl fmt::Debug for ExposurePattern {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                ExposurePattern::Binders(bs) => {
-                    write!(f, "<")?;
-                    write!(f, "{:#?}", DebugVec(
-                        bs.iter().cloned().map(Pattern::from).collect(),
-                        ";"
-                    ))?;
-                    write!(f, ">")
-                }
-                ExposurePattern::All => write!(f, "<..>"),
+                ExposurePattern::Binder(b) => write!(f, "{:#?}", b),
+                ExposurePattern::All => write!(f, ".."),
             }
         }
     }
