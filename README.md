@@ -1,7 +1,11 @@
 # Lala
 An expression oriented data notation, aimed at transpiling itself to any cascaded data notation.
 
+Lala is separated into three components: `Nana`, `Lala`, and `Dada`.
+
 ## Quick Examples
+
+### Direct Tranpilation
 
 Some examples will be provided here as an introduction to lala.
 
@@ -11,39 +15,41 @@ Some examples will be provided here as an introduction to lala.
 - lala4toml
 - lala4yaml
 
-Also some "just because I can" examples:
-
-### Functional Programming in Nana
+### Functional Programming in Lala
 
 ```lala
+/* `~` means definition, like `let` or `var` */
 ~ qsort xs := (
+    /* pattern matching */
     ? xs
     | [] -> []
     | [x] + xs -> (
-        ~ (s, l) = partition ((>) x) xs;
+        ~ (s, l) = list.partition ((>) x) xs;
         (qsort s) + [x] + (qsort l)
     )
 );
 qsort [1,3,4,2,5]
 ```
 
-### Object-Oriented Programming in Nana
+### Object-Oriented Programming in Lala
 
 ```lala
+/* definition of a "class", `student` */
 ~ student <name; sleep; ability; gpa> := [
+    ~ name := name;
     ~ study := (
         ?? sleep 
         | name + " doesn't want to study." 
         | name + " is diligent!"
     );
-    ~ exam hardcore := (
+    ~ exam difficulty := (
         ~ base = (
             ?? gpa >= 4.0
             | ability
             | (
                 ?? sleep
-                | ability - hardcore
-                | ability - 2 * hardcore
+                | ability - difficulty
+                | ability - 2 * difficulty
             )
         );
         ?? base > 0
@@ -52,24 +58,44 @@ qsort [1,3,4,2,5]
     );
 ];
 
-~ hcz := student [
-    ~ name := "hcz";
+/* application, creating two instances */
+~ alice := student [
+    ~ name := "Alice";
     ~ sleep := 0;
     ~ ability := 100;
     ~ gpa := 4.3;
 ];
+~ bob := student [
+    ~ name := "Bob";
+    ~ sleep := 1;
+    ~ ability := 90;
+    ~ gpa := 3.7;
+];
 
+/* get value; of course it could be better abstracted */
 {
-    "study_status": hcz.study,
-    "exam_result": hcz.exam 100,
+    alice.name: {
+        "study_status": alice.study,
+        "exam_result": alice.exam 20,
+    },
+    bob.name: {
+        "study_status": bob.study,
+        "exam_result": bob.exam 20,
+    }
 }
 ```
 
 the result is
 ```json
 {
-    "study_status": "hcz doesn't want to study.",
-    "exam_result": 100
+    "alice": {
+        "study_status": "Alice doesn't want to study.",
+        "exam_result": 100
+    },
+    "bob": {
+        "study_status": "Bob is diligent!",
+        "exam_result": 70
+    }
 }
 ```
 
@@ -97,9 +123,8 @@ Nana, a proof-of-concept language, will first be implemented, along with the fol
 Nana++. 
 
 1. the order of computation embedded in data structure
-2. more data structures as primitives
-3. type system
-4. a standard library
+2. type system
+3. a standard library
 
 ### Dada
 
