@@ -46,6 +46,7 @@ fn code_base() -> Vec<String> {
         ~ tuple x y := (x,y);
         ~ double x := tuple x x;
         ~ idd x' := [
+            ~ x' ;
             ~ (x, y) := x';
             x
         ];

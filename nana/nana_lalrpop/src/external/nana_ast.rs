@@ -132,6 +132,20 @@ mod construct {
     impl From<Block> for Expr {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
+    impl From<Pattern> for Expr {
+        fn from(pat: Pattern) -> Self {
+            match pat {
+                Pattern::Binder(b) => Self::Binder(b),
+                // Pattern::Exposure(_) => todo!(),
+                // Pattern::Vector(v) => {
+                //     Self::Block(Block::from())
+                // }
+                // Pattern::Tuple(_) => todo!(),
+                // Pattern::HashMap(_) => todo!(),
+                _ => panic!("Converting illegal pattern to expr.")
+            }
+        }
+    }
     impl From<Binder> for Expr {
         fn from(binder: Binder) -> Self { Self::Binder(binder) }
     }
@@ -193,6 +207,12 @@ mod construct {
             (head, Expr::from(binding)).into()
         }
     }
+    impl From<Pattern> for Binding {
+        fn from(pattern: Pattern) -> Self {
+            let expr = pattern.clone();
+            (Head::from(pattern), Expr::from(expr)).into()
+        }
+    }
 
     impl From<String> for Binder {
         fn from(s: String) -> Self {
@@ -202,6 +222,12 @@ mod construct {
 
     impl From<(Pattern, Mask)> for Head {
         fn from((pattern, mask): (Pattern, Mask)) -> Self {
+            Self::Pat { pattern, mask }
+        }
+    }
+    impl From<Pattern> for Head {
+        fn from(pattern: Pattern) -> Self {
+            let mask = Mask::Exposed;
             Self::Pat { pattern, mask }
         }
     }
@@ -218,6 +244,7 @@ mod construct {
             Self::Fun { binder, args, mask }
         }
     }
+
     impl From<(Pattern, Pattern)> for Pattern {
         fn from((alias, pat): (Pattern, Pattern)) -> Self {
             Self::Alias(Box::new(alias), Box::new(pat))

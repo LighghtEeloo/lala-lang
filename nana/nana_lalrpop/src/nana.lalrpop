@@ -61,6 +61,7 @@ Literal: Literal = {
 
 // Note: Head is now guarded by "~" to reduce ambiguity.
 Binding: Binding = {
+    "~" <Pattern> ";" => <>.into(),
     "~" <h:Head> <e:Expr> ";" => (h,e).into(),
     "~" <h:Head> <b:Binding> => (h,b).into(),
 };
