@@ -59,8 +59,10 @@ Literal: Literal = {
     <RAWCONST> => Literal::Raw(<>.into()),
 };
 
+// Note: Head is now guarded by "~" to reduce ambiguity.
 Binding: Binding = {
-    <hs:Head+> <e:Expr> ";" => (hs,e).into(),
+    "~" <h:Head> <e:Expr> ";" => (h,e).into(),
+    "~" <h:Head> <b:Binding> => (h,b).into(),
 };
 
 Binder: Binder = {
@@ -69,10 +71,9 @@ Binder: Binder = {
     <SYMBOLIDENT> => <>.into(),
 };
 
-// Note: Head is now guarded by "~" to reduce ambiguity.
 Head: Head = {
-    "~" <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
-    "~" <p:Pattern> <m:Mask> => (p,m).into(),
+    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
+    <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
 Mask: Mask = {
@@ -106,7 +107,7 @@ IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 UIDENT: String = r"_[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 WILDCARD: String = "_" => <>.into();
 FORTHEREST: String = ".." => <>.into();
-SYMBOLIDENT: String = "(" <syn:r"[~!@#$%^&/\?\|\+\*]"> ")" => syn.into(); // Todo: [+-*/~!$%&]
+SYMBOLIDENT: String = "(" <syn:r"[~!@#$%^&/\?\|\+\*]"> ")" => syn.into();
 
 
 // Const

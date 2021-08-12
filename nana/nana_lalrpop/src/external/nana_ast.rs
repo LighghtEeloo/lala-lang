@@ -5,6 +5,7 @@ pub struct Nana {
 
 #[derive(Clone)]
 pub enum Expr {
+    Binding(Binding),
     Application(Application),
     ControlFlow(ControlFlow),
     Block(Block),
@@ -61,8 +62,8 @@ pub enum Literal {
 
 #[derive(Clone)]
 pub struct Binding {
-    pub heads: Vec<Head>,
-    pub expr: Expr,
+    pub head: Head,
+    pub expr: Box<Expr>,
 }
 
 #[derive(Clone)]
@@ -119,6 +120,9 @@ mod construct {
         }
     }
 
+    impl From<Binding> for Expr {
+        fn from(b: Binding) -> Self { Self::Binding(b) }
+    }
     impl From<Application> for Expr {
         fn from(app: Application) -> Self { Self::Application(app) }
     }
@@ -178,9 +182,15 @@ mod construct {
         }
     }
 
-    impl From<(Vec<Head>, Expr)> for Binding {
-        fn from((heads, expr): (Vec<Head>, Expr)) -> Self {
-            Self { heads, expr }
+    impl From<(Head, Expr)> for Binding {
+        fn from((head, expr): (Head, Expr)) -> Self {
+            let expr = Box::new(expr);
+            Self { head, expr }
+        }
+    }
+    impl From<(Head, Binding)> for Binding {
+        fn from((head, binding): (Head, Binding)) -> Self {
+            (head, Expr::from(binding)).into()
         }
     }
 
@@ -248,11 +258,14 @@ mod print {
     impl fmt::Debug for Expr {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Self::ControlFlow(c) => {
-                    write!(f, "{:#?}", c)
+                Self::Binding(b) => {
+                    write!(f, "{:#?}", b)
                 }
                 Self::Application(app) => {
                     write!(f, "{:#?}", app)
+                }
+                Self::ControlFlow(c) => {
+                    write!(f, "{:#?}", c)
                 }
                 Self::Block(e) => write!(f, "{:#?}", e),
                 Self::Binder(e) => write!(f, "{:#?}", e),
@@ -348,10 +361,7 @@ mod print {
 
     impl fmt::Debug for Binding {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            for h in &self.heads {
-                write!(f, "{:#?} ", h)?;
-            }
-            write!(f, "{:#?}", self.expr)
+            write!(f, "~ {:#?} {:#?}", self.head, self.expr)
         }
     }
 
