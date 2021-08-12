@@ -39,9 +39,9 @@ Application: Application = {
 };
 
 Block: Block = {
-    "[" <BlockInner> "]" => (Sturcture::Sum, <>).into(),
-    "(" <BlockInner> ")" => (Sturcture::Product, <>).into(),
-    "{" <BlockInner> "}" => (Sturcture::Labeled, <>).into(),
+    "[" <BlockInner> "]" => Block::Vector(BlockInner::<Vector>::from(<>)),
+    "(" <BlockInner> ")" => Block::Tuple(BlockInner::<Tuple>::from(<>)),
+    "{" <BlockInner> "}" => Block::Labeled(BlockInner::<Labeled>::from(<>)),
 };
 
 BlockInner: (Vec<Binding>, Vec<Molecule>) = {
