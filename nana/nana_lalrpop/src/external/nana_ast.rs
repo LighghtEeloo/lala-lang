@@ -15,7 +15,7 @@ pub enum Expr {
 #[derive(Clone)]
 pub struct Application {
     func: Box<Expr>,
-    args: Vec<Expr>,
+    arg: Box<Expr>,
 }
 
 #[derive(Clone)]
@@ -135,15 +135,11 @@ mod construct {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
     }
 
-    impl From<Expr> for Application {
-        fn from(func: Expr) -> Self {
-            (func, Vec::new()).into()
-        }
-    }
-    impl From<(Expr, Vec<Expr>)> for Application {
-        fn from((func, args): (Expr, Vec<Expr>)) -> Self {
+    impl From<(Expr, Expr)> for Application {
+        fn from((func, arg): (Expr, Expr)) -> Self {
             let func = Box::new(func);
-            Self { func, args }
+            let arg = Box::new(arg);
+            Self { func, arg }
         }
     }
 
@@ -267,11 +263,7 @@ mod print {
 
     impl fmt::Debug for Application {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "({:#?}", self.func)?;
-            for a in &self.args {
-                write!(f, " {:#?}", a)?;
-            }
-            write!(f, ")")
+            write!(f, "({:#?} {:#?})", self.func, self.arg)
         }
     }
 

@@ -35,7 +35,7 @@ MatchingBranch: (Pattern, Expr) = {
 };
 
 Application: Application = {
-    <func:AtomExpr> <args:AtomExpr+> => (func,args).into(),
+    <func:AppExpr> <arg:AtomExpr> => (func,arg).into(),
 };
 
 Block: Block = {

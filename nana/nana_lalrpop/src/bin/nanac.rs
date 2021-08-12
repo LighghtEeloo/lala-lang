@@ -43,7 +43,8 @@ fn code_base() -> Vec<String> {
     ~ <pi; double; id; idd> := [
         ~ murmur := "...\"";
         ~ id x := x;
-        ~ double x := (x,x);
+        ~ tuple x y := (x,y);
+        ~ double x := tuple x x;
         ~ idd x' := [
             ~ (x, y) := x';
             x
