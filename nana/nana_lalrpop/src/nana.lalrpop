@@ -96,16 +96,20 @@ Pattern: Pattern = {
     "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
     "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
     "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
-    "{" <ps:Comma<AppExpr>> "}" => Pattern::HashMap(ps),
+    "{" <ps:Comma<PairedPattern>> "}" => Pattern::HashMap(ps),
 };
+
+AliasPattern: Pattern = {
+    <al:Pattern> "=" <p:Pattern> => (al, p).into(),
+}
 
 ExposurePattern: ExposurePattern = {
     <Binder> => ExposurePattern::Binder(<>),
     <FORTHEREST> => ExposurePattern::All,
 };
 
-AliasPattern: Pattern = {
-    <al:Pattern> "=" <p:Pattern> => (al, p).into(),
+PairedPattern: (Expr, Pattern) = {
+    <e:AppExpr> ":" <p:Pattern> => (e, p),
 }
 
 // Identifiers

@@ -98,7 +98,7 @@ pub enum Pattern {
     Exposure(Vec<ExposurePattern>),
     Vector(Vec<Pattern>),
     Tuple(Vec<Pattern>),
-    HashMap(Vec<Expr>),
+    HashMap(Vec<(Expr, Pattern)>),
 }
 
 #[derive(Clone)]
