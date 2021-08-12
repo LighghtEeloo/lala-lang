@@ -5,6 +5,7 @@ pub struct Nana {
 
 #[derive(Clone)]
 pub enum Expr {
+    Binding(Binding),
     Application(Application),
     ControlFlow(ControlFlow),
     Block(Block),
@@ -15,7 +16,7 @@ pub enum Expr {
 #[derive(Clone)]
 pub struct Application {
     func: Box<Expr>,
-    args: Vec<Expr>,
+    arg: Box<Expr>,
 }
 
 #[derive(Clone)]
@@ -47,7 +48,7 @@ pub enum Molecule {
 
 #[derive(Debug, Clone)]
 pub struct Paired {
-    pub key: Literal,
+    pub key: Expr,
     pub val: Expr,
 }
 
@@ -61,8 +62,8 @@ pub enum Literal {
 
 #[derive(Clone)]
 pub struct Binding {
-    pub heads: Vec<Head>,
-    pub expr: Expr,
+    pub head: Head,
+    pub expr: Box<Expr>,
 }
 
 #[derive(Clone)]
@@ -89,16 +90,20 @@ pub enum Mask {
 
 #[derive(Clone)]
 pub enum Pattern {
+    Alias(Box<Pattern>, Box<Pattern>),
+    Wild,
+    Rest,
+    Literal(Literal),
     Binder(Binder),
-    Arbitrary,
-    Exposure(ExposurePattern),
+    Exposure(Vec<ExposurePattern>),
     Vector(Vec<Pattern>),
     Tuple(Vec<Pattern>),
+    HashMap(Vec<(Expr, Pattern)>),
 }
 
 #[derive(Clone)]
 pub enum ExposurePattern {
-    Binders(Vec<Binder>),
+    Binder(Binder),
     All
 }
 
@@ -116,6 +121,9 @@ mod construct {
         }
     }
 
+    impl From<Binding> for Expr {
+        fn from(b: Binding) -> Self { Self::Binding(b) }
+    }
     impl From<Application> for Expr {
         fn from(app: Application) -> Self { Self::Application(app) }
     }
@@ -125,6 +133,20 @@ mod construct {
     impl From<Block> for Expr {
         fn from(block: Block) -> Self { Self::Block(block) }
     }
+    impl From<Pattern> for Expr {
+        fn from(pat: Pattern) -> Self {
+            match pat {
+                Pattern::Binder(b) => Self::Binder(b),
+                // Pattern::Exposure(_) => todo!(),
+                // Pattern::Vector(v) => {
+                //     Self::Block(Block::from())
+                // }
+                // Pattern::Tuple(_) => todo!(),
+                // Pattern::HashMap(_) => todo!(),
+                _ => panic!("Converting illegal pattern to expr.")
+            }
+        }
+    }
     impl From<Binder> for Expr {
         fn from(binder: Binder) -> Self { Self::Binder(binder) }
     }
@@ -132,15 +154,11 @@ mod construct {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
     }
 
-    impl From<Expr> for Application {
-        fn from(func: Expr) -> Self {
-            (func, Vec::new()).into()
-        }
-    }
-    impl From<(Expr, Vec<Expr>)> for Application {
-        fn from((func, args): (Expr, Vec<Expr>)) -> Self {
+    impl From<(Expr, Expr)> for Application {
+        fn from((func, arg): (Expr, Expr)) -> Self {
             let func = Box::new(func);
-            Self { func, args }
+            let arg = Box::new(arg);
+            Self { func, arg }
         }
     }
 
@@ -162,6 +180,15 @@ mod construct {
     impl From<Expr> for Molecule {
         fn from(e: Expr) -> Self { Self::Expr(e) }
     }
+    impl From<Paired> for Molecule {
+        fn from(p: Paired) -> Self { Self::Paired(p) }
+    }
+
+    impl From<(Expr, Expr)> for Paired {
+        fn from((key, val): (Expr, Expr)) -> Self {
+            Self { key, val }
+        }
+    }
 
     impl From<u64> for Literal {
         fn from(i: u64) -> Self {
@@ -179,9 +206,21 @@ mod construct {
         }
     }
 
-    impl From<(Vec<Head>, Expr)> for Binding {
-        fn from((heads, expr): (Vec<Head>, Expr)) -> Self {
-            Self { heads, expr }
+    impl From<(Head, Expr)> for Binding {
+        fn from((head, expr): (Head, Expr)) -> Self {
+            let expr = Box::new(expr);
+            Self { head, expr }
+        }
+    }
+    impl From<(Head, Binding)> for Binding {
+        fn from((head, binding): (Head, Binding)) -> Self {
+            (head, Expr::from(binding)).into()
+        }
+    }
+    impl From<Pattern> for Binding {
+        fn from(pattern: Pattern) -> Self {
+            let expr = pattern.clone();
+            (Head::from(pattern), Expr::from(expr)).into()
         }
     }
 
@@ -193,6 +232,12 @@ mod construct {
 
     impl From<(Pattern, Mask)> for Head {
         fn from((pattern, mask): (Pattern, Mask)) -> Self {
+            Self::Pat { pattern, mask }
+        }
+    }
+    impl From<Pattern> for Head {
+        fn from(pattern: Pattern) -> Self {
+            let mask = Mask::Exposed;
             Self::Pat { pattern, mask }
         }
     }
@@ -210,12 +255,10 @@ mod construct {
         }
     }
 
-    impl From<Binder> for Pattern {
-        fn from(b: Binder) -> Self { Self::Binder(b) }
-    }
-
-    impl From<Vec<Binder>> for ExposurePattern {
-        fn from(binders: Vec<Binder>) -> Self { Self::Binders(binders) }
+    impl From<(Pattern, Pattern)> for Pattern {
+        fn from((alias, pat): (Pattern, Pattern)) -> Self {
+            Self::Alias(Box::new(alias), Box::new(pat))
+        }
     }
 }
 
@@ -252,11 +295,14 @@ mod print {
     impl fmt::Debug for Expr {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Self::ControlFlow(c) => {
-                    write!(f, "{:#?}", c)
+                Self::Binding(b) => {
+                    write!(f, "{:#?}", b)
                 }
                 Self::Application(app) => {
                     write!(f, "{:#?}", app)
+                }
+                Self::ControlFlow(c) => {
+                    write!(f, "{:#?}", c)
                 }
                 Self::Block(e) => write!(f, "{:#?}", e),
                 Self::Binder(e) => write!(f, "{:#?}", e),
@@ -267,11 +313,7 @@ mod print {
 
     impl fmt::Debug for Application {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "({:#?}", self.func)?;
-            for a in &self.args {
-                write!(f, " {:#?}", a)?;
-            }
-            write!(f, ")")
+            write!(f, "({:#?} {:#?})", self.func, self.arg)
         }
     }
 
@@ -356,10 +398,7 @@ mod print {
 
     impl fmt::Debug for Binding {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            for h in &self.heads {
-                write!(f, "{:#?} ", h)?;
-            }
-            write!(f, "{:#?}", self.expr)
+            write!(f, "~ {:#?} {:#?}", self.head, self.expr)
         }
     }
 
@@ -392,36 +431,43 @@ mod print {
     impl fmt::Debug for Pattern {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Pattern::Binder(b) => write!(f, "{:#?}", b),
-                Pattern::Arbitrary => write!(f, "_"),
-                Pattern::Exposure(ex) => write!(f, "{:#?}", ex),
-                Pattern::Vector(ps) => {
+                Self::Alias(al,p) => write!(f, "({:#?} = {:#?})", al, p),
+                Self::Wild => write!(f, "_"),
+                Self::Rest => write!(f, ".."),
+                Self::Literal(l) => write!(f, "{:#?}", l),
+                Self::Binder(b) => write!(f, "{:#?}", b),
+                Self::Exposure(ex) => {
+                    write!(f, "<")?;
+                    write!(f, "{:#?}", DebugVec(
+                        ex.iter().cloned().collect(),
+                        ";"
+                    ))?;
+                    write!(f, ">")        
+                }
+                Self::Vector(ps) => {
                     write!(f, "[")?;
                     write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
                     write!(f, "]")
                 }
-                Pattern::Tuple(ps) => {
+                Self::Tuple(ps) => {
                     write!(f, "(")?;
                     write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
                     write!(f, ")")
+                }
+                Self::HashMap(ps) => {
+                    write!(f, "{{")?;
+                    write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
+                    write!(f, "}}")
                 }
             }
         }
     }
 
-
     impl fmt::Debug for ExposurePattern {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                ExposurePattern::Binders(bs) => {
-                    write!(f, "<")?;
-                    write!(f, "{:#?}", DebugVec(
-                        bs.iter().cloned().map(Pattern::from).collect(),
-                        ";"
-                    ))?;
-                    write!(f, ">")
-                }
-                ExposurePattern::All => write!(f, "<*>"),
+                ExposurePattern::Binder(b) => write!(f, "{:#?}", b),
+                ExposurePattern::All => write!(f, ".."),
             }
         }
     }

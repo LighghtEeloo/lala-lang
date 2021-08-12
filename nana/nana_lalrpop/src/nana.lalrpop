@@ -35,7 +35,7 @@ MatchingBranch: (Pattern, Expr) = {
 };
 
 Application: Application = {
-    <func:AtomExpr> <args:AtomExpr+> => (func,args).into(),
+    <func:AppExpr> <arg:AtomExpr> => (func,arg).into(),
 };
 
 Block: Block = {
@@ -49,8 +49,13 @@ BlockInner: (Vec<Binding>, Vec<Molecule>) = {
 };
 
 Molecule: Molecule = {
-    <Expr> => <>.into()
+    <Expr> => <>.into(),
+    <Paired> => <>.into(),
 };
+
+Paired: Paired = {
+    <k:AppExpr> ":" <v:Expr> => (k, v).into(),
+}
 
 Literal: Literal = {
     <INTCONST> => <>.into(),
@@ -59,8 +64,11 @@ Literal: Literal = {
     <RAWCONST> => Literal::Raw(<>.into()),
 };
 
+// Note: Head is now guarded by "~" to reduce ambiguity.
 Binding: Binding = {
-    <hs:Head+> <e:Expr> ";" => (hs,e).into(),
+    "~" <Pattern> ";" => <>.into(),
+    "~" <h:Head> <e:Expr> ";" => (h,e).into(),
+    "~" <h:Head> <b:Binding> => (h,b).into(),
 };
 
 Binder: Binder = {
@@ -69,10 +77,9 @@ Binder: Binder = {
     <SYMBOLIDENT> => <>.into(),
 };
 
-// Note: Head is now guarded by "~" to reduce ambiguity.
 Head: Head = {
-    "~" <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(), // Fixme: Pattern+
-    "~" <p:Pattern> <m:Mask> => (p,m).into(),
+    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
+    <p:Pattern> <m:Mask> => (p,m).into(),
 };
 
 Mask: Mask = {
@@ -81,24 +88,37 @@ Mask: Mask = {
 };
 
 Pattern: Pattern = {
+    "(" <AliasPattern> ")" => <>,
+    <WILDCARD> => Pattern::Wild,
+    <FORTHEREST> => Pattern::Rest,
+    <Literal> => Pattern::Literal(<>),
     <Binder> => Pattern::Binder(<>),
-    <WILDCARD> => Pattern::Arbitrary,
-    "<" <bs:SemiColonOnce<Binder>> ">" => Pattern::Exposure(bs.into()),
-    "<" <EVERYTHING> ">" => Pattern::Exposure(ExposurePattern::All),
+    "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
     "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
     "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
+    "{" <ps:Comma<PairedPattern>> "}" => Pattern::HashMap(ps),
 };
 
+AliasPattern: Pattern = {
+    <al:Pattern> "=" <p:Pattern> => (al, p).into(),
+}
 
+ExposurePattern: ExposurePattern = {
+    <Binder> => ExposurePattern::Binder(<>),
+    <FORTHEREST> => ExposurePattern::All,
+};
 
+PairedPattern: (Expr, Pattern) = {
+    <e:AppExpr> ":" <p:Pattern> => (e, p),
+}
 
 // Identifiers
 
 IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 UIDENT: String = r"_[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
 WILDCARD: String = "_" => <>.into();
-EVERYTHING: String = "*" => <>.into();
-SYMBOLIDENT: String = "(" <syn:r"[~!@#$%^&/\?\|\+\*]"> ")" => syn.into(); // Todo: [+-*/~!$%&]
+FORTHEREST: String = ".." => <>.into();
+SYMBOLIDENT: String = "(" <syn:r"[~!@#$%^&/\?\|\+\*]"> ")" => syn.into();
 
 
 // Const

@@ -43,12 +43,14 @@ fn code_base() -> Vec<String> {
     ~ <pi; double; id; idd> := [
         ~ murmur := "...\"";
         ~ id x := x;
-        ~ double x := (x,x);
+        ~ tuple x y := (x,y);
+        ~ double x := tuple x x;
         ~ idd x' := [
+            ~ x' ;
             ~ (x, y) := x';
             x
         ];
-        ~ dine := ~ <*> := (
+        ~ dine := ~ <..> := (
             ~ divine := [|jail|];
             ~ divine := [1, 0x2f, 3.0, .4, 5e1];
             3.1415926
@@ -62,7 +64,16 @@ fn code_base() -> Vec<String> {
 ~ pattern xs := (
     ? xs
     | [] -> []
-    | [x, y] -> [y, x]
+    | [x, y] -> (
+        ~ _ = (
+            ? { "x": 1 }
+            | { "x": x } -> x
+        );
+        ? x
+        | 0 -> [y, x]
+        | _ -> [y, y, x]
+    )
+    | [_, _, (xs=..)] -> xs
     | _ -> xs
 );
     "#),
