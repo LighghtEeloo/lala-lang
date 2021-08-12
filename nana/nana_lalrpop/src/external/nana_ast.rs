@@ -91,9 +91,10 @@ pub enum Mask {
 #[derive(Clone)]
 pub enum Pattern {
     Alias(Box<Pattern>, Box<Pattern>),
-    Binder(Binder),
     Wild,
     Rest,
+    Literal(Literal),
+    Binder(Binder),
     Exposure(Vec<ExposurePattern>),
     Vector(Vec<Pattern>),
     Tuple(Vec<Pattern>),
@@ -431,9 +432,10 @@ mod print {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
                 Self::Alias(al,p) => write!(f, "({:#?} = {:#?})", al, p),
-                Self::Binder(b) => write!(f, "{:#?}", b),
                 Self::Wild => write!(f, "_"),
                 Self::Rest => write!(f, ".."),
+                Self::Literal(l) => write!(f, "{:#?}", l),
+                Self::Binder(b) => write!(f, "{:#?}", b),
                 Self::Exposure(ex) => {
                     write!(f, "<")?;
                     write!(f, "{:#?}", DebugVec(

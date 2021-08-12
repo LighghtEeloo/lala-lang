@@ -89,9 +89,10 @@ Mask: Mask = {
 
 Pattern: Pattern = {
     "(" <AliasPattern> ")" => <>,
-    <Binder> => Pattern::Binder(<>),
     <WILDCARD> => Pattern::Wild,
     <FORTHEREST> => Pattern::Rest,
+    <Literal> => Pattern::Literal(<>),
+    <Binder> => Pattern::Binder(<>),
     "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
     "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
     "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),

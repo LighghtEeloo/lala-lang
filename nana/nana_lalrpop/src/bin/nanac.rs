@@ -64,17 +64,13 @@ fn code_base() -> Vec<String> {
 ~ pattern xs := (
     ? xs
     | [] -> []
-    | [x, y] -> [y, x]
+    | [x, y] -> (
+        ? x
+        | 0 -> [y, x]
+        | _ -> [y, y, x]
+    )
     | [_, _, (xs=..)] -> xs
     | _ -> xs
-);
-    "#),
-    format!("{}", r#"
-~ pattern_map xs := (
-    ? xs
-    | { "hey", "yes" } -> []
-    | { "x" } -> [y, x]
-    | _ -> [xs]
 );
     "#),
     format!("{}", r#"
