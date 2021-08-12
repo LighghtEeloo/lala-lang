@@ -63,6 +63,7 @@ fn code_base() -> Vec<String> {
     ? xs
     | [] -> []
     | [x, y] -> [y, x]
+    | [_, _, (xs=..)] -> xs
     | _ -> xs
 );
     "#),

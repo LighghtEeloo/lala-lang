@@ -81,6 +81,7 @@ Mask: Mask = {
 };
 
 Pattern: Pattern = {
+    "(" <AliasPattern> ")" => <>,
     <Binder> => Pattern::Binder(<>),
     <WILDCARD> => Pattern::Wild,
     <FORTHEREST> => Pattern::Rest,
@@ -95,6 +96,9 @@ ExposurePattern: ExposurePattern = {
     <FORTHEREST> => ExposurePattern::All,
 };
 
+AliasPattern: Pattern = {
+    <al:Pattern> "=" <p:Pattern> => (al, p).into(),
+}
 
 // Identifiers
 

@@ -89,6 +89,7 @@ pub enum Mask {
 
 #[derive(Clone)]
 pub enum Pattern {
+    Alias(Box<Pattern>, Box<Pattern>),
     Binder(Binder),
     Wild,
     Rest,
@@ -209,6 +210,11 @@ mod construct {
         fn from((binder, args, mask): (Binder, Vec<Pattern>, Mask)) -> Self {
             let args = Pattern::Vector(args);
             Self::Fun { binder, args, mask }
+        }
+    }
+    impl From<(Pattern, Pattern)> for Pattern {
+        fn from((alias, pat): (Pattern, Pattern)) -> Self {
+            Self::Alias(Box::new(alias), Box::new(pat))
         }
     }
 }
@@ -386,10 +392,11 @@ mod print {
     impl fmt::Debug for Pattern {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Pattern::Binder(b) => write!(f, "{:#?}", b),
-                Pattern::Wild => write!(f, "_"),
-                Pattern::Rest => write!(f, ".."),
-                Pattern::Exposure(ex) => {
+                Self::Alias(al,p) => write!(f, "({:#?} = {:#?})", al, p),
+                Self::Binder(b) => write!(f, "{:#?}", b),
+                Self::Wild => write!(f, "_"),
+                Self::Rest => write!(f, ".."),
+                Self::Exposure(ex) => {
                     write!(f, "<")?;
                     write!(f, "{:#?}", DebugVec(
                         ex.iter().cloned().collect(),
@@ -397,17 +404,17 @@ mod print {
                     ))?;
                     write!(f, ">")        
                 }
-                Pattern::Vector(ps) => {
+                Self::Vector(ps) => {
                     write!(f, "[")?;
                     write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
                     write!(f, "]")
                 }
-                Pattern::Tuple(ps) => {
+                Self::Tuple(ps) => {
                     write!(f, "(")?;
                     write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
                     write!(f, ")")
                 }
-                Pattern::HashMap(ps) => {
+                Self::HashMap(ps) => {
                     write!(f, "{{")?;
                     write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
                     write!(f, "}}")
