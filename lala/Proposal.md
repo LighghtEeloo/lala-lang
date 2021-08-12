@@ -289,18 +289,9 @@ Note that binders appear in the form of patterns.
 // Todo: Sequential is currying
 
 ```lala
-add [x;y] := x + y; /* function definition `add` */
-res := add [1;2];   /* 3 */
-```
-
-Sugaring to make user happy:
-
-```lala
-add x y := x + y;
+add x y := x + y;   /* function definition `add` */
 res := add 1 2;     /* 3 */
 ```
-
-Note that both notations of function abstractions and applications above are legal and equal to each other.
 
 As for currying,
 
@@ -308,9 +299,7 @@ As for currying,
 add_1 := add 1;
 ```
 
-partially apply a function will produce any other function with fewer arguments to be fed.
-
-Under the hood, the binders (for functions) only takes one actual argument, which is a lazy-evaluated list; you can read more in [pattern language section](#pattern-language).
+partially apply a function will produce any other function with fewer arguments to be fed. Under the hood, the binders (for functions) only takes one actual argument.
 
 ### Modular Input
 
@@ -339,7 +328,6 @@ As we've in fact incountered many pattern usage, I think it's a good time now to
 
 ```lala
 /* deconstruct a list or array */
- a b c
 [a,b,c]
 [a]+[b]+[c]
 ab+[c] /* favored for performance (?: dl-list) */
@@ -367,8 +355,7 @@ _ +[c]
 Notice that there's little `;` in pattern language because `,` looks better (kidding). In fact, the design principle traces back to the difference between binder space and value space. Almost all patterns are dealing with values, so `,` appears everywhere, except `<a; b; c>` as it deals with binder space elimination.
 
 A few other comments:
-1. ` a b c` may seem a bit confusing; but actually we're using it all the time. It's in fact just function arguments, passed to the function in a sequence, one by one. The list itself is lazy-evaluated, so it's deconstructed, from right to left, eval one single right-most element in the list at a time, and take it to a function that receives one less argument, until the list is empty and the binding is reduce from function to a variable.
-2. `ab+[c]` should be favored over `[a]+bc`, unlike most fp language's behavior. This is because lala prefers vector impl over linked lists. e.g., in the use case of `json` a vector is better most of the time. Say a history of operations are stored. Usually we append, not prepend the latest events.
+1. `ab+[c]` should be favored over `[a]+bc`, unlike most fp language's behavior. This is because lala prefers vector impl over linked lists. e.g., in the use case of `json` a vector is better most of the time. Say a history of operations are stored. Usually we append, not prepend the latest events.
 
 
 ## Type Constructor
