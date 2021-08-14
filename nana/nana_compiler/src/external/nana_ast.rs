@@ -92,6 +92,7 @@ pub enum Pattern {
     Exposure(Vec<ExposurePattern>),
     Vector(Vec<Pattern>),
     Tuple(Vec<Pattern>),
+    HashSet(Vec<Pattern>),
     HashMap(Vec<(Expr, Pattern)>),
 }
 
@@ -458,6 +459,11 @@ mod print {
                     write!(f, "(")?;
                     write!(f, "{:#?}", DebugVec(ps, ","))?;
                     write!(f, ")")
+                }
+                Self::HashSet(ps) => {
+                    write!(f, "{{")?;
+                    write!(f, "{:#?}", DebugVec(ps, ","))?;
+                    write!(f, "}}")
                 }
                 Self::HashMap(ps) => {
                     write!(f, "{{")?;
