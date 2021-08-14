@@ -72,14 +72,14 @@ pub struct Pair {
 
 #[derive(Clone)]
 pub struct Projection {
-    block: Box<Expr>,
-    binder: Binder,
+    pub block: Box<Expr>,
+    pub binder: Binder,
 }
 
 #[derive(Clone)]
 pub struct Closure {
-    paras: Vec<Pattern>,
-    block: Block,
+    pub paras: Vec<Pattern>,
+    pub block: Block,
 }
 
 #[derive(Clone)]
