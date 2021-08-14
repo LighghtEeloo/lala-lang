@@ -1,0 +1,185 @@
+use crate::lala_ast::*;
+
+grammar;
+
+pub Lala: Lala = {
+    <BlockInnerExpr> => <>.into(),
+};
+
+Expr: Expr = {
+    <AppExpr>,
+    <ControlFlow> => <>.into(),
+};
+
+AppExpr: Expr = {
+    <AtomExpr> => <>.into(),
+    <Application> => <>.into(),
+};
+
+/// A semantically minimal expr, 
+/// meaning that AtomExpr must be associated within itself.
+///
+/// Note that `()` wrapped expr is now in Struct(Tuple).
+AtomExpr: Expr = {
+    <Block> => <>.into(),
+    <Projection> => <>.into(),
+    <Binder> => <>.into(),
+    <Literal> => <>.into(),
+};
+
+ControlFlow: ControlFlow = {
+    "?" <e:AppExpr> <bs:MatchingBranch+> => (e, bs).into(),
+};
+
+MatchingBranch: (Pattern, Expr) = {
+    "|" <p:Pattern> "->" <e:AppExpr> => (p, e),
+};
+
+Application: Application = {
+    <func:AppExpr> <arg:AtomExpr> => (func,arg).into(),
+};
+
+Block: Block = {
+    "[" <BlockInnerExpr> "]" => Block::Vector(<>),
+    "(" <BlockInnerExpr> ")" => Block::Tuple(<>),
+    "{" <BlockInnerExpr> "}" => Block::HashSet(<>),
+    "{" <BlockInnerPair> "}" => Block::HashMap(<>),
+};
+
+BlockInnerExpr: BlockInner<Expr> = {
+    <bs:Binding*> <ms:Comma<Expr>> => (bs, ms).into(),
+};
+
+BlockInnerPair: BlockInner<Pair> = {
+    <bs:Binding*> <ms:CommaOnce<Pair>> => (bs, ms).into(),
+};
+
+Pair: Pair = {
+    <k:AppExpr> ":" <v:Expr> => (k, v).into(),
+}
+
+Projection: Projection = {
+    <e:AtomExpr> "." <b:Binder> => (e, b).into(),
+};
+
+Literal: Literal = {
+    <INTCONST> => <>.into(),
+    <FLTCONST> => <>.into(),
+    <STRCONST> => <>.into(),
+    <RAWCONST> => Literal::Raw(<>.into()),
+};
+
+// Note: Head is now guarded by "~" to reduce ambiguity.
+Binding: Binding = {
+    "~" <Pattern> ";" => <>.into(),
+    "~" <h:Head> <e:Expr> ";" => (h,e).into(),
+    "~" <h:Head> <b:Binding> => (h,b).into(),
+};
+
+Binder: Binder = {
+    <IDENT> => <>.into(),
+    <UIDENT> => <>.into(),
+    <SYMBOLIDENT> => <>.into(),
+};
+
+Head: Head = {
+    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
+    <p:Pattern> <m:Mask> => (p,m).into(),
+};
+
+Mask: Mask = {
+    "=" => Mask::Closed,
+    ":=" => Mask::Exposed,
+};
+
+Pattern: Pattern = {
+    "(" <AliasPattern> ")" => <>,
+    <WILDCARD> => Pattern::Wild,
+    <FORTHEREST> => Pattern::Rest,
+    <Literal> => Pattern::Literal(<>),
+    <Binder> => Pattern::Binder(<>),
+    "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
+    "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
+    "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
+    "{" <ps:Comma<PairPattern>> "}" => Pattern::HashMap(ps),
+};
+
+AliasPattern: Pattern = {
+    <al:Pattern> "=" <p:Pattern> => (al, p).into(),
+}
+
+ExposurePattern: ExposurePattern = {
+    <Binder> => ExposurePattern::Binder(<>),
+    <FORTHEREST> => ExposurePattern::All,
+};
+
+PairPattern: (Expr, Pattern) = {
+    <e:AppExpr> ":" <p:Pattern> => (e, p),
+}
+
+// Identifiers
+
+IDENT: String = r"[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+UIDENT: String = r"_[a-zA-Z][_0-9a-zA-Z]*'*" => <>.into();
+WILDCARD: String = "_" => <>.into();
+FORTHEREST: String = ".." => <>.into();
+SYMBOLIDENT: String = "(" <syn:r"[~!@#$%^&/\?\|\+\*]"> ")" => syn.into();
+
+
+// Const
+
+INTCONST: u64 = {
+    r"[0-9]+" => <>.parse::<u64>().unwrap(),
+    r"0[xX][0-9a-fA-F]+" => {
+        let s = <>
+            .trim_start_matches("0x")
+            .trim_start_matches("0X");
+        u64::from_str_radix(s, 16).unwrap()
+    },
+};
+FLTCONST: f64 = {
+    r"[0-9]*\.[0-9]+([eE][-\+]?[0-9]+)?" => <>.parse::<f64>().unwrap(),
+    r"[0-9]+[eE][-\+]?[0-9]+" => <>.parse::<f64>().unwrap(),
+};
+STRCONST: String = r#""([^"\\]|\\.)*""# => <>.into();
+RAWCONST: String = r"\[\|.*\|\]" => <>.into();
+
+// Utility
+
+#[inline]
+Comma<T>: Vec<T> = {
+    <mut v:(<T> ",")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+#[inline]
+CommaOnce<T>: Vec<T> = {
+    <mut v:(<T> ",")*> <e:T> => {
+        v.push(e);
+        v
+    }
+};
+
+#[inline]
+SemiColon<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            v.push(e);
+            v
+        }
+    }
+};
+
+#[inline]
+SemiColonOnce<T>: Vec<T> = {
+    <mut v:(<T> ";")*> <e:T> => {
+        v.push(e);
+        v
+    }
+};
