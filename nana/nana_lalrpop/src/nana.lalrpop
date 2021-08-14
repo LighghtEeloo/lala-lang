@@ -3,7 +3,7 @@ use crate::nana_ast::*;
 grammar;
 
 pub Nana: Nana = {
-    <BlockInner> => <>.into(),
+    <BlockInnerExpr> => <>.into(),
 };
 
 Expr: Expr = {
@@ -39,21 +39,21 @@ Application: Application = {
 };
 
 Block: Block = {
-    "[" <BlockInner> "]" => Block::Vector(<>),
-    "(" <BlockInner> ")" => Block::Tuple(<>),
-    "{" <BlockInner> "}" => Block::Labeled(<>),
+    "[" <BlockInnerExpr> "]" => Block::Vector(<>),
+    "(" <BlockInnerExpr> ")" => Block::Tuple(<>),
+    "{" <BlockInnerExpr> "}" => Block::HashSet(<>),
+    "{" <BlockInnerPair> "}" => Block::HashMap(<>),
 };
 
-BlockInner: BlockInner = {
-    <bs:Binding*> <ms:Comma<Molecule>> => (bs, ms).into(),
+BlockInnerExpr: BlockInner<Expr> = {
+    <bs:Binding*> <ms:Comma<Expr>> => (bs, ms).into(),
 };
 
-Molecule: Molecule = {
-    <Expr> => <>.into(),
-    <Paired> => <>.into(),
+BlockInnerPair: BlockInner<Pair> = {
+    <bs:Binding*> <ms:CommaOnce<Pair>> => (bs, ms).into(),
 };
 
-Paired: Paired = {
+Pair: Pair = {
     <k:AppExpr> ":" <v:Expr> => (k, v).into(),
 }
 
@@ -96,7 +96,7 @@ Pattern: Pattern = {
     "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
     "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
     "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
-    "{" <ps:Comma<PairedPattern>> "}" => Pattern::HashMap(ps),
+    "{" <ps:Comma<PairPattern>> "}" => Pattern::HashMap(ps),
 };
 
 AliasPattern: Pattern = {
@@ -108,7 +108,7 @@ ExposurePattern: ExposurePattern = {
     <FORTHEREST> => ExposurePattern::All,
 };
 
-PairedPattern: (Expr, Pattern) = {
+PairPattern: (Expr, Pattern) = {
     <e:AppExpr> ":" <p:Pattern> => (e, p),
 }
 

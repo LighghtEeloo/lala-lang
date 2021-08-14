@@ -59,28 +59,22 @@ pub enum ControlFlow {
     // Enumeration(Expr, Vec<Expr>)
 }
 
-
 #[derive(Clone)]
 pub enum Block {
-    Vector(BlockInner),
-    Tuple(BlockInner),
-    Labeled(BlockInner),
+    Vector(BlockInner<Expr>),
+    Tuple(BlockInner<Expr>),
+    HashSet(BlockInner<Expr>),
+    HashMap(BlockInner<Pair>),
 }
 
 #[derive(Clone)]
-pub struct BlockInner {
+pub struct BlockInner<Val> {
     pub binder_space: Vec<Binding>,
-    pub value_space: Vec<Molecule>,
-}
-
-#[derive(Clone)]
-pub enum Molecule {
-    Expr(Expr),
-    Paired(Paired),
+    pub value_space: Vec<Val>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Paired {
+pub struct Pair {
     pub key: Expr,
     pub val: Expr,
 }
@@ -120,8 +114,8 @@ mod construct {
         fn from(body: Expr) -> Self { Self { body } }
     }
 
-    impl From<BlockInner> for Nana {
-        fn from(bi: BlockInner) -> Self { 
+    impl From<BlockInner<Expr>> for Nana {
+        fn from(bi: BlockInner<Expr>) -> Self { 
             Expr::from(Block::from(bi)).into()
         }
     }
@@ -222,28 +216,21 @@ mod construct {
         }
     }
 
-    impl From<BlockInner> for Block {
-        fn from(bi: BlockInner) -> Self { 
+    impl From<BlockInner<Expr>> for Block {
+        fn from(bi: BlockInner<Expr>) -> Self { 
             Self::Tuple(bi)
         }
     }
 
-    impl From<(Vec<Binding>, Vec<Molecule>)> for BlockInner {
+    impl<Val> From<(Vec<Binding>, Vec<Val>)> for BlockInner<Val> {
         fn from(
-            (binder_space, value_space): (Vec<Binding>, Vec<Molecule>)
+            (binder_space, value_space): (Vec<Binding>, Vec<Val>)
         ) -> Self { 
             Self { binder_space, value_space } 
         }
     }
 
-    impl From<Expr> for Molecule {
-        fn from(e: Expr) -> Self { Self::Expr(e) }
-    }
-    impl From<Paired> for Molecule {
-        fn from(p: Paired) -> Self { Self::Paired(p) }
-    }
-
-    impl From<(Expr, Expr)> for Paired {
+    impl From<(Expr, Expr)> for Pair {
         fn from((key, val): (Expr, Expr)) -> Self {
             Self { key, val }
         }
@@ -396,35 +383,27 @@ mod print {
                     }
                     db.finish()
                 }
-                Block::Labeled(blk) => {
+                Block::HashSet(blk) => {
+                    let mut db = f.debug_set();
+                    for b in blk.binder_space.iter() {
+                        db.entry(&b);
+                    }
+                    for m in blk.value_space.iter() {
+                        db.entry(&m);
+                    }
+                    db.finish()
+                }
+                Block::HashMap(blk) => {
                     let mut db = f.debug_map();
                     for b in blk.binder_space.iter() {
                         db.entry(&"", &b);
                     }
-                    for m in blk.value_space.iter() {
-                        match m {
-                            Molecule::Expr(e) => {
-                                db.entry(&"", &e);
-                            }
-                            Molecule::Paired(Paired { key, val }) => {
-                                db.entry(key, val);
-                            }
-                        }
+                    for Pair { key, val } in blk.value_space.iter() {
+                        db.entry(key, val);
                     }
                     db.finish()
                 }
             }
-        }
-    }
-
-
-    impl fmt::Debug for Molecule {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Molecule::Expr(e) => write!(f, "{:#?}", e),
-                Molecule::Paired(_) => todo!(),
-            }
-            
         }
     }
 
