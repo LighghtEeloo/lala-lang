@@ -31,19 +31,6 @@ impl Binder {
     }
 }
 
-// #[derive(Clone)]
-// pub enum Head {
-//     Fun {
-//         binder: Binder,
-//         args: Pattern,
-//         mask: Mask,
-//     },
-//     Pat {
-//         pattern: Pattern,
-//         mask: Mask,
-//     },
-// }
-
 #[derive(Clone)]
 pub enum Mask {
     Closed,
@@ -195,17 +182,6 @@ mod construct {
         }
     }
 
-    // impl From<(Head, Expr)> for Abstraction {
-    //     fn from((head, expr): (Head, Expr)) -> Self {
-    //         let expr = Box::new(expr);
-    //         Self { head, expr }
-    //     }
-    // }
-    // impl From<(Head, Abstraction)> for Abstraction {
-    //     fn from((head, binding): (Head, Abstraction)) -> Self {
-    //         (head, Expr::from(binding)).into()
-    //     }
-    // }
     impl From<(Pattern, Mask, Expr)> for Abstraction {
         fn from((pattern, mask, expr): (Pattern, Mask, Expr)) -> Self {
             let expr = Box::new(expr);
@@ -227,31 +203,6 @@ mod construct {
             }
         }
     }
-
-    // impl From<(Pattern, Mask)> for Head {
-    //     fn from((pattern, mask): (Pattern, Mask)) -> Self {
-    //         Self::Pat { pattern, mask }
-    //     }
-    // }
-    // impl From<Pattern> for Head {
-    //     fn from(pattern: Pattern) -> Self {
-    //         let mask = Mask::Exposed;
-    //         Self::Pat { pattern, mask }
-    //     }
-    // }
-    // impl From<(Binder, Pattern, Mask)> for Head {
-    //     /// Val form
-    //     fn from((binder, args, mask): (Binder, Pattern, Mask)) -> Self {
-    //         Self::Fun { binder, args, mask }
-    //     }
-    // }
-    // impl From<(Binder, Vec<Pattern>, Mask)> for Head {
-    //     /// Val form
-    //     fn from((binder, args, mask): (Binder, Vec<Pattern>, Mask)) -> Self {
-    //         let args = Pattern::Vector(args);
-    //         Self::Fun { binder, args, mask }
-    //     }
-    // }
 
     impl From<(Expr, Expr)> for Application {
         fn from((func, arg): (Expr, Expr)) -> Self {
@@ -383,17 +334,6 @@ mod print {
             write!(f, "{:#?} {:#?} {:#?}", self.pattern, self.mask, self.expr)
         }
     }
-
-    // impl fmt::Debug for Head {
-    //     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    //         match self {
-    //             Head::Fun { binder, args, mask } => 
-    //                 write!(f, "{:#?} {:#?} {:#?}", binder, args, mask),
-    //             Head::Pat { pattern, mask } =>
-    //                 write!(f, "{:#?} {:#?}", pattern, mask),
-    //         }
-    //     }
-    // }
 
     impl fmt::Debug for Mask {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
