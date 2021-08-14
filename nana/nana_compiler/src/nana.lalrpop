@@ -108,7 +108,7 @@ Pattern: Pattern = {
 };
 
 AliasPattern: Pattern = {
-    <p:Pattern> "@" <al:Pattern> => (al, p).into(),
+    <p:Pattern> "=" <al:Pattern> => (al, p).into(),
 }
 
 ExposurePattern: ExposurePattern = {
