@@ -8,8 +8,8 @@ pub Nana: Nana = {
 
 Expr: Expr = {
     <AppExpr>,
-    <ControlFlow> => <>.into(),
     <Closure> => <>.into(),
+    <ControlFlow> => <>.into(),
 };
 
 AppExpr: Expr = {
@@ -74,15 +74,19 @@ Closure: Closure = {
 
 // Note: Head is now guarded by "~" to reduce ambiguity.
 Abstraction: Abstraction = {
-    "~" <Pattern> ";" => <>.into(),
-    "~" <h:Head> <e:Expr> ";" => (h,e).into(),
-    "~" <h:Head> <b:Abstraction> => (h,b).into(),
+    <b:Binder> <m:Mask> <abs:Abstraction> => (b, m, Expr::from(abs)).into(),
+    <b:Binder> <m:Mask> <e:Expr> ";" => (b, m, e).into(),
+    // <Pattern> ";" => <>.into(),
+    // <p:Pattern> <m:Mask> <e:Expr> ";" => (p, m, e).into(),
+    // "~" <Pattern> ";" => <>.into(),
+    // "~" <h:Head> <e:Expr> ";" => (h,e).into(),
+    // "~" <h:Head> <b:Abstraction> => (h,b).into(),
 };
 
-Head: Head = {
-    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
-    <p:Pattern> <m:Mask> => (p,m).into(),
-};
+// Head: Head = {
+//     <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
+//     <p:Pattern> <m:Mask> => (p,m).into(),
+// };
 
 Mask: Mask = {
     "=" => Mask::Closed,
