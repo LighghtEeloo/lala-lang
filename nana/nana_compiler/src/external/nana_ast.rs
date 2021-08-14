@@ -78,7 +78,7 @@ pub struct Projection {
 
 #[derive(Clone)]
 pub struct Closure {
-    pub paras: Vec<Pattern>,
+    pub para: Option<Pattern>,
     pub block: Block,
 }
 
@@ -217,12 +217,25 @@ mod construct {
             Self::Tuple(bi)
         }
     }
+    impl From<Closure> for Block {
+        fn from(c: Closure) -> Self {
+            Self::Tuple(c.into())
+        }
+    }
 
     impl<Val> From<(Vec<Abstraction>, Vec<Val>)> for BlockInner<Val> {
         fn from(
             (binder_space, value_space): (Vec<Abstraction>, Vec<Val>)
         ) -> Self { 
             Self { binder_space, value_space } 
+        }
+    }
+    impl From<Closure> for BlockInner<Expr> {
+        fn from(c: Closure) -> Self {
+            Self {
+                binder_space: Vec::new(),
+                value_space: vec!(c.into()),
+            }
         }
     }
 
@@ -246,7 +259,15 @@ mod construct {
         }
     }
     impl From<(Vec<Pattern>, Block)> for Closure {
-        fn from((paras, block): (Vec<Pattern>, Block)) -> Self { Self { paras, block } }
+        fn from((mut paras, block): (Vec<Pattern>, Block)) -> Self { 
+            if let Some(pat) = paras.pop() {
+                let para = Some(pat);
+                (paras, Block::from(Self { para, block })).into()
+            } else {
+                let para = None;
+                Self { para, block }
+            }
+        }
     }
 
     impl From<(Pattern, Pattern)> for Pattern {
@@ -406,8 +427,12 @@ mod print {
 
     impl fmt::Debug for Closure {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let Closure { paras, block } = self;
-            write!(f, "| {:?} | {:#?}", DebugVec(paras, ","), block)
+            let Closure { para, block } = self;
+            let para = match para {
+                Some(para) => format!(" {:?} ", para),
+                None => format!(" "),
+            };
+            write!(f, "|{}| {:#?}", para, block)
         }
     }
 
