@@ -7,12 +7,17 @@ pub Nana: Nana = {
 };
 
 Expr: Expr = {
+    <FlowExpr>,
+    <Closure> => <>.into(),
+};
+
+FlowExpr: Expr = {
     <AppExpr>,
     <ControlFlow> => <>.into(),
 };
 
 AppExpr: Expr = {
-    <AtomExpr> => <>.into(),
+    <AtomExpr>,
     <Application> => <>.into(),
 };
 
@@ -21,22 +26,27 @@ AppExpr: Expr = {
 ///
 /// Note that `()` wrapped expr is now in Struct(Tuple).
 AtomExpr: Expr = {
+    <Literal> => <>.into(),
+    <Binder> => <>.into(),
     <Block> => <>.into(),
     <Projection> => <>.into(),
-    <Binder> => <>.into(),
-    <Literal> => <>.into(),
-};
-
-ControlFlow: ControlFlow = {
-    "?" <e:AppExpr> <bs:MatchingBranch+> => (e, bs).into(),
-};
-
-MatchingBranch: (Pattern, Expr) = {
-    "|" <p:Pattern> "->" <e:AppExpr> => (p, e),
 };
 
 Application: Application = {
     <func:AppExpr> <arg:AtomExpr> => (func,arg).into(),
+};
+
+Literal: Literal = {
+    <INTCONST> => <>.into(),
+    <FLTCONST> => <>.into(),
+    <STRCONST> => <>.into(),
+    <RAWCONST> => Literal::Raw(<>.into()),
+};
+
+Binder: Binder = {
+    <IDENT> => <>.into(),
+    <UIDENT> => <>.into(),
+    <SYMBOLIDENT> => <>.into(),
 };
 
 Block: Block = {
@@ -47,11 +57,11 @@ Block: Block = {
 };
 
 BlockInnerExpr: BlockInner<Expr> = {
-    <bs:Binding*> <ms:Comma<Expr>> => (bs, ms).into(),
+    <bs:Abstraction*> <ms:Comma<Expr>> => (bs, ms).into(),
 };
 
 BlockInnerPair: BlockInner<Pair> = {
-    <bs:Binding*> <ms:CommaOnce<Pair>> => (bs, ms).into(),
+    <bs:Abstraction*> <ms:CommaOnce<Pair>> => (bs, ms).into(),
 };
 
 Pair: Pair = {
@@ -62,30 +72,23 @@ Projection: Projection = {
     <e:AtomExpr> "." <b:Binder> => (e, b).into(),
 };
 
-Literal: Literal = {
-    <INTCONST> => <>.into(),
-    <FLTCONST> => <>.into(),
-    <STRCONST> => <>.into(),
-    <RAWCONST> => Literal::Raw(<>.into()),
+Closure: Closure = {
+    "|" <ps:Comma<Pattern>> "|" <b:Block> => (ps, b).into()
 };
 
-// Note: Head is now guarded by "~" to reduce ambiguity.
-Binding: Binding = {
+Abstraction: Abstraction = {
+    <b:Binder> <m:Mask> <e:Expr> ";" => (b, m, e).into(),
+    // Note: Pattern heads are now guarded by "~" to reduce ambiguity.
+    "~" <b:Binder> <ps:Pattern+> <m:Mask> <blk: Block> ";" => (b, m, Closure::from((ps, blk)).into()).into(),
     "~" <Pattern> ";" => <>.into(),
-    "~" <h:Head> <e:Expr> ";" => (h,e).into(),
-    "~" <h:Head> <b:Binding> => (h,b).into(),
+    "~" <p:Pattern> <m:Mask> <e:Expr> ";" => (p, m, e).into(),
+    "~" <p:Pattern> <m:Mask> <abs:Abstraction> => (p, m, Expr::from(abs)).into(),
 };
 
-Binder: Binder = {
-    <IDENT> => <>.into(),
-    <UIDENT> => <>.into(),
-    <SYMBOLIDENT> => <>.into(),
-};
-
-Head: Head = {
-    <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
-    <p:Pattern> <m:Mask> => (p,m).into(),
-};
+// Head: Head = {
+//     <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
+//     <p:Pattern> <m:Mask> => (p,m).into(),
+// };
 
 Mask: Mask = {
     "=" => Mask::Closed,
@@ -105,7 +108,7 @@ Pattern: Pattern = {
 };
 
 AliasPattern: Pattern = {
-    <al:Pattern> "=" <p:Pattern> => (al, p).into(),
+    <p:Pattern> "=" <al:Pattern> => (al, p).into(),
 }
 
 ExposurePattern: ExposurePattern = {
@@ -116,6 +119,14 @@ ExposurePattern: ExposurePattern = {
 PairPattern: (Expr, Pattern) = {
     <e:AppExpr> ":" <p:Pattern> => (e, p),
 }
+
+ControlFlow: ControlFlow = {
+    "?" <e:AppExpr> <bs:MatchingBranch+> => (e, bs).into(),
+};
+
+MatchingBranch: (Pattern, Expr) = {
+    "|" <p:Pattern> "->" <e:AppExpr> => (p, e),
+};
 
 // Identifiers
 
