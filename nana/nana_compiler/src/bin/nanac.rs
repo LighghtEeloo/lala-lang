@@ -1,6 +1,9 @@
 use std::io::Read;
 
-use nana_compiler::nana;
+use nana_compiler::{
+    nana,
+    Lexical
+};
 
 fn main() -> anyhow::Result<()> {
 
@@ -28,6 +31,8 @@ fn parse_nana(code: &String) {
     match res {
         Ok(res) => {
             println!("{:#?}", res);
+            let nana = res.lexical();
+            println!("{:#?}", nana);
         }
         Err(e) => {
             println!("Error: {}", e);
@@ -67,7 +72,12 @@ lam := || (
     "#),
     format!("{}", r#"
 curry := |a, b| (
-    |c, d| ()
+    |c, d| ((((1))))
+);
+    "#),
+    format!("{}", r#"
+curry' := |a, b| (
+    ((|| ( |c| (((1))))))
 );
     "#),
     ]
