@@ -7,13 +7,17 @@ pub Nana: Nana = {
 };
 
 Expr: Expr = {
-    <AppExpr>,
+    <FlowExpr>,
     <Closure> => <>.into(),
+};
+
+FlowExpr: Expr = {
+    <AppExpr>,
     <ControlFlow> => <>.into(),
 };
 
 AppExpr: Expr = {
-    <AtomExpr> => <>.into(),
+    <AtomExpr>,
     <Application> => <>.into(),
 };
 
