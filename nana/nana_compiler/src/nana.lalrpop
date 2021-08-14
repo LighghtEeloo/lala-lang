@@ -76,15 +76,13 @@ Closure: Closure = {
     "|" <ps:Comma<Pattern>> "|" <b:Block> => (ps, b).into()
 };
 
-// Note: Head is now guarded by "~" to reduce ambiguity.
 Abstraction: Abstraction = {
-    <b:Binder> <m:Mask> <abs:Abstraction> => (b, m, Expr::from(abs)).into(),
     <b:Binder> <m:Mask> <e:Expr> ";" => (b, m, e).into(),
-    // <Pattern> ";" => <>.into(),
-    // <p:Pattern> <m:Mask> <e:Expr> ";" => (p, m, e).into(),
-    // "~" <Pattern> ";" => <>.into(),
-    // "~" <h:Head> <e:Expr> ";" => (h,e).into(),
-    // "~" <h:Head> <b:Abstraction> => (h,b).into(),
+    // Note: Pattern heads are now guarded by "~" to reduce ambiguity.
+    "~" <b:Binder> <ps:Pattern+> <m:Mask> <blk: Block> ";" => (b, m, Closure::from((ps, blk)).into()).into(),
+    "~" <Pattern> ";" => <>.into(),
+    "~" <p:Pattern> <m:Mask> <e:Expr> ";" => (p, m, e).into(),
+    "~" <p:Pattern> <m:Mask> <abs:Abstraction> => (p, m, Expr::from(abs)).into(),
 };
 
 // Head: Head = {
@@ -110,7 +108,7 @@ Pattern: Pattern = {
 };
 
 AliasPattern: Pattern = {
-    <al:Pattern> "=" <p:Pattern> => (al, p).into(),
+    <p:Pattern> "@" <al:Pattern> => (al, p).into(),
 }
 
 ExposurePattern: ExposurePattern = {
