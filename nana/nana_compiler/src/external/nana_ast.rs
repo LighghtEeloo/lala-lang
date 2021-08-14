@@ -9,8 +9,8 @@ pub enum Expr {
     Binder(Binder),
     Abstraction(Abstraction),
     Application(Application),
-    Block(Block),
     Projection(Projection),
+    GatedBlock(Closure),
     ControlFlow(ControlFlow),
 }
 
@@ -89,6 +89,12 @@ pub struct Projection {
 }
 
 #[derive(Clone)]
+pub struct Closure {
+    paras: Vec<Pattern>,
+    block: Block,
+}
+
+#[derive(Clone)]
 pub enum Pattern {
     Alias(Box<Pattern>, Box<Pattern>),
     Wild,
@@ -140,10 +146,13 @@ mod construct {
         fn from(app: Application) -> Self { Self::Application(app) }
     }
     impl From<Block> for Expr {
-        fn from(block: Block) -> Self { Self::Block(block) }
+        fn from(block: Block) -> Self { Self::GatedBlock(block.into()) }
     }
     impl From<Projection> for Expr {
         fn from(p: Projection) -> Self { Self::Projection(p) }
+    }
+    impl From<Closure> for Expr {
+        fn from(c: Closure) -> Self { Self::GatedBlock(c) }
     }
     impl From<Pattern> for Expr {
         fn from(pat: Pattern) -> Self {
@@ -263,6 +272,16 @@ mod construct {
         }
     }
 
+    impl From<Block> for Closure {
+        fn from(b: Block) -> Self {
+            let ps = Vec::new();
+            (ps, b).into()
+        }
+    }
+    impl From<(Vec<Pattern>, Block)> for Closure {
+        fn from((paras, block): (Vec<Pattern>, Block)) -> Self { Self { paras, block } }
+    }
+
     impl From<(Pattern, Pattern)> for Pattern {
         fn from((alias, pat): (Pattern, Pattern)) -> Self {
             Self::Alias(Box::new(alias), Box::new(pat))
@@ -309,19 +328,19 @@ mod print {
     impl fmt::Debug for Expr {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
+                Self::Literal(e) => write!(f, "{:#?}", e),
+                Self::Binder(e) => write!(f, "{:#?}", e),
                 Self::Abstraction(b) => {
                     write!(f, "{:#?}", b)
                 }
                 Self::Application(app) => {
                     write!(f, "{:#?}", app)
                 }
+                Self::Projection(p) => write!(f, "{:#?}", p),
+                Self::GatedBlock(c) => write!(f, "{:#?}", c),
                 Self::ControlFlow(c) => {
                     write!(f, "{:#?}", c)
                 }
-                Self::Block(e) => write!(f, "{:#?}", e),
-                Self::Projection(p) => write!(f, "{:#?}", p),
-                Self::Binder(e) => write!(f, "{:#?}", e),
-                Self::Literal(e) => write!(f, "{:#?}", e),
             }
         }
     }
@@ -426,6 +445,13 @@ mod print {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             let Projection { block, binder} = self;
             write!(f, "{:#?}.{:#?}", block, binder)
+        }
+    }
+
+    impl fmt::Debug for Closure {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let Closure { paras: para, block } = self;
+            write!(f, "| {:#?} | {:#?}", para, block)
         }
     }
 
