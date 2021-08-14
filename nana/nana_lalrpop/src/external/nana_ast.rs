@@ -9,6 +9,7 @@ pub enum Expr {
     Application(Application),
     ControlFlow(ControlFlow),
     Block(Block),
+    Projection(Projection),
     Binder(Binder),
     Literal(Literal),
 }
@@ -80,6 +81,12 @@ pub struct Pair {
 }
 
 #[derive(Clone)]
+pub struct Projection {
+    block: Box<Expr>,
+    binder: Binder,
+}
+
+#[derive(Clone)]
 pub enum Literal {
     Int(u64),
     Float(f64),
@@ -131,6 +138,9 @@ mod construct {
     }
     impl From<Block> for Expr {
         fn from(block: Block) -> Self { Self::Block(block) }
+    }
+    impl From<Projection> for Expr {
+        fn from(p: Projection) -> Self { Self::Projection(p) }
     }
     impl From<Pattern> for Expr {
         fn from(pat: Pattern) -> Self {
@@ -236,6 +246,13 @@ mod construct {
         }
     }
 
+    impl From<(Expr, Binder)> for Projection {
+        fn from((e, binder): (Expr, Binder)) -> Self {
+            let block = Box::new(e);
+            Self { block, binder }
+        }
+    }
+
     impl From<u64> for Literal {
         fn from(i: u64) -> Self {
             Self::Int (i)
@@ -302,6 +319,7 @@ mod print {
                     write!(f, "{:#?}", c)
                 }
                 Self::Block(e) => write!(f, "{:#?}", e),
+                Self::Projection(p) => write!(f, "{:#?}", p),
                 Self::Binder(e) => write!(f, "{:#?}", e),
                 Self::Literal(e) => write!(f, "{:#?}", e),
             }
@@ -404,6 +422,13 @@ mod print {
                     db.finish()
                 }
             }
+        }
+    }
+
+    impl fmt::Debug for Projection {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let Projection { block, binder} = self;
+            write!(f, "{:#?}.{:#?}", block, binder)
         }
     }
 

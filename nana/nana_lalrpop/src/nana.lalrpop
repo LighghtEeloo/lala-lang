@@ -22,6 +22,7 @@ AppExpr: Expr = {
 /// Note that `()` wrapped expr is now in Struct(Tuple).
 AtomExpr: Expr = {
     <Block> => <>.into(),
+    <Projection> => <>.into(),
     <Binder> => <>.into(),
     <Literal> => <>.into(),
 };
@@ -56,6 +57,10 @@ BlockInnerPair: BlockInner<Pair> = {
 Pair: Pair = {
     <k:AppExpr> ":" <v:Expr> => (k, v).into(),
 }
+
+Projection: Projection = {
+    <e:AtomExpr> "." <b:Binder> => (e, b).into(),
+};
 
 Literal: Literal = {
     <INTCONST> => <>.into(),

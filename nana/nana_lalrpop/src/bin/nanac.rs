@@ -40,7 +40,7 @@ fn parse_nana(code: &String) {
 fn code_base() -> Vec<String> {
     vec![ format!("{}", r#"
 ~ pi := (
-    ~ <pi; double; id; idd> := [
+    ~ (<pi; double; id; idd> = pi_m) = [
         ~ murmur := "...\"";
         ~ id x := x;
         ~ tuple x y := (x,y);
@@ -57,7 +57,7 @@ fn code_base() -> Vec<String> {
         );
         ~ pi := id dine;
     ];
-    pi
+    pi_m.pi
 );
     "#),
     format!("{}", r#"
