@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use nana_lalrpop::nana;
+use lala_compiler::lala;
 
 fn main() -> anyhow::Result<()> {
 
@@ -24,7 +24,7 @@ fn main() -> anyhow::Result<()> {
 
 
 fn parse_nana(code: &String) {
-    let res = nana::NanaParser::new().parse(code);
+    let res = lala::LalaParser::new().parse(code);
     match res {
         Ok(res) => {
             println!("{:#?}", res);

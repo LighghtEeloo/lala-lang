@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "lala/lala_lalrpop",
-    "nana/nana_lalrpop"
+    "lala/lala_compiler",
+    "nana/nana_compiler"
 ]
