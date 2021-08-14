@@ -9,55 +9,9 @@ pub enum Expr {
     Application(Application),
     ControlFlow(ControlFlow),
     Block(Block),
+    Projection(Projection),
     Binder(Binder),
     Literal(Literal),
-}
-
-#[derive(Clone)]
-pub struct Application {
-    func: Box<Expr>,
-    arg: Box<Expr>,
-}
-
-#[derive(Clone)]
-pub enum ControlFlow {
-    Matching(Box<Expr>, Vec<(Pattern, Expr)>),
-    // Enumeration(Expr, Vec<Expr>)
-}
-
-
-#[derive(Clone)]
-pub struct Block {
-    pub structure: Sturcture,
-    pub binder_space: Vec<Binding>,
-    pub value_space: Vec<Molecule>,
-}
-
-#[derive(Clone)]
-pub enum Sturcture {
-    Sum,
-    Product,
-    Labeled
-}
-
-#[derive(Clone)]
-pub enum Molecule {
-    Expr(Expr),
-    Paired(Paired),
-}
-
-#[derive(Debug, Clone)]
-pub struct Paired {
-    pub key: Expr,
-    pub val: Expr,
-}
-
-#[derive(Clone)]
-pub enum Literal {
-    Int(u64),
-    Float(f64),
-    Str(String),
-    Raw(String),
 }
 
 #[derive(Clone)]
@@ -68,6 +22,12 @@ pub struct Binding {
 
 #[derive(Clone)]
 pub struct Binder(String);
+impl Binder {
+    pub fn name(self) -> String {
+        let Binder(s) = self;
+        s
+    }
+}
 
 #[derive(Clone)]
 pub enum Head {
@@ -86,6 +46,52 @@ pub enum Head {
 pub enum Mask {
     Closed,
     Exposed,
+}
+
+#[derive(Clone)]
+pub struct Application {
+    func: Box<Expr>,
+    arg: Box<Expr>,
+}
+
+#[derive(Clone)]
+pub enum ControlFlow {
+    Matching(Box<Expr>, Vec<(Pattern, Expr)>),
+    // Enumeration(Expr, Vec<Expr>)
+}
+
+#[derive(Clone)]
+pub enum Block {
+    Vector(BlockInner<Expr>),
+    Tuple(BlockInner<Expr>),
+    HashSet(BlockInner<Expr>),
+    HashMap(BlockInner<Pair>),
+}
+
+#[derive(Clone)]
+pub struct BlockInner<Val> {
+    pub binder_space: Vec<Binding>,
+    pub value_space: Vec<Val>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Pair {
+    pub key: Expr,
+    pub val: Expr,
+}
+
+#[derive(Clone)]
+pub struct Projection {
+    block: Box<Expr>,
+    binder: Binder,
+}
+
+#[derive(Clone)]
+pub enum Literal {
+    Int(u64),
+    Float(f64),
+    Str(String),
+    Raw(String),
 }
 
 #[derive(Clone)]
@@ -115,9 +121,9 @@ mod construct {
         fn from(body: Expr) -> Self { Self { body } }
     }
 
-    impl From<(Vec<Binding>, Vec<Molecule>)> for Nana {
-        fn from(bi: (Vec<Binding>, Vec<Molecule>)) -> Self { 
-            Expr::from(Block::from((Sturcture::Product, bi))).into()
+    impl From<BlockInner<Expr>> for Nana {
+        fn from(bi: BlockInner<Expr>) -> Self { 
+            Expr::from(Block::from(bi)).into()
         }
     }
 
@@ -132,6 +138,9 @@ mod construct {
     }
     impl From<Block> for Expr {
         fn from(block: Block) -> Self { Self::Block(block) }
+    }
+    impl From<Projection> for Expr {
+        fn from(p: Projection) -> Self { Self::Projection(p) }
     }
     impl From<Pattern> for Expr {
         fn from(pat: Pattern) -> Self {
@@ -152,58 +161,6 @@ mod construct {
     }
     impl From<Literal> for Expr {
         fn from(lit: Literal) -> Self { Self::Literal(lit) }
-    }
-
-    impl From<(Expr, Expr)> for Application {
-        fn from((func, arg): (Expr, Expr)) -> Self {
-            let func = Box::new(func);
-            let arg = Box::new(arg);
-            Self { func, arg }
-        }
-    }
-
-    impl From<(Expr, Vec<(Pattern, Expr)>)> for ControlFlow {
-        fn from((e, branches): (Expr, Vec<(Pattern, Expr)>)) -> Self {
-            Self::Matching(Box::new(e), branches)
-        }
-    }
-
-    impl From<(Sturcture, (Vec<Binding>, Vec<Molecule>))> for Block {
-        fn from(
-            (computation, (binder_space, value_space)): 
-            (Sturcture, (Vec<Binding>, Vec<Molecule>))
-        ) -> Self { 
-            Self { structure: computation, binder_space, value_space } 
-        }
-    }
-
-    impl From<Expr> for Molecule {
-        fn from(e: Expr) -> Self { Self::Expr(e) }
-    }
-    impl From<Paired> for Molecule {
-        fn from(p: Paired) -> Self { Self::Paired(p) }
-    }
-
-    impl From<(Expr, Expr)> for Paired {
-        fn from((key, val): (Expr, Expr)) -> Self {
-            Self { key, val }
-        }
-    }
-
-    impl From<u64> for Literal {
-        fn from(i: u64) -> Self {
-            Self::Int (i)
-        }
-    }
-    impl From<f64> for Literal {
-        fn from(f: f64) -> Self {
-            Self::Float (f)
-        }
-    }
-    impl From<String> for Literal {
-        fn from(s: String) -> Self {
-            Self::Str (s)
-        }
     }
 
     impl From<(Head, Expr)> for Binding {
@@ -252,6 +209,63 @@ mod construct {
         fn from((binder, args, mask): (Binder, Vec<Pattern>, Mask)) -> Self {
             let args = Pattern::Vector(args);
             Self::Fun { binder, args, mask }
+        }
+    }
+
+    impl From<(Expr, Expr)> for Application {
+        fn from((func, arg): (Expr, Expr)) -> Self {
+            let func = Box::new(func);
+            let arg = Box::new(arg);
+            Self { func, arg }
+        }
+    }
+
+    impl From<(Expr, Vec<(Pattern, Expr)>)> for ControlFlow {
+        fn from((e, branches): (Expr, Vec<(Pattern, Expr)>)) -> Self {
+            Self::Matching(Box::new(e), branches)
+        }
+    }
+
+    impl From<BlockInner<Expr>> for Block {
+        fn from(bi: BlockInner<Expr>) -> Self { 
+            Self::Tuple(bi)
+        }
+    }
+
+    impl<Val> From<(Vec<Binding>, Vec<Val>)> for BlockInner<Val> {
+        fn from(
+            (binder_space, value_space): (Vec<Binding>, Vec<Val>)
+        ) -> Self { 
+            Self { binder_space, value_space } 
+        }
+    }
+
+    impl From<(Expr, Expr)> for Pair {
+        fn from((key, val): (Expr, Expr)) -> Self {
+            Self { key, val }
+        }
+    }
+
+    impl From<(Expr, Binder)> for Projection {
+        fn from((e, binder): (Expr, Binder)) -> Self {
+            let block = Box::new(e);
+            Self { block, binder }
+        }
+    }
+
+    impl From<u64> for Literal {
+        fn from(i: u64) -> Self {
+            Self::Int (i)
+        }
+    }
+    impl From<f64> for Literal {
+        fn from(f: f64) -> Self {
+            Self::Float (f)
+        }
+    }
+    impl From<String> for Literal {
+        fn from(s: String) -> Self {
+            Self::Str (s)
         }
     }
 
@@ -305,93 +319,9 @@ mod print {
                     write!(f, "{:#?}", c)
                 }
                 Self::Block(e) => write!(f, "{:#?}", e),
+                Self::Projection(p) => write!(f, "{:#?}", p),
                 Self::Binder(e) => write!(f, "{:#?}", e),
                 Self::Literal(e) => write!(f, "{:#?}", e),
-            }
-        }
-    }
-
-    impl fmt::Debug for Application {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "({:#?} {:#?})", self.func, self.arg)
-        }
-    }
-
-    impl fmt::Debug for ControlFlow {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                ControlFlow::Matching(e, bs) => {
-                    write!(f, "? {:#?} ", e)?;
-                    for (p, e) in bs {
-                        write!(f, "| {:#?} -> {:#?} ", p, e)?;
-                    }
-                }
-            }
-            write!(f, "")
-        }
-    }
-
-    impl fmt::Debug for Block {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self.structure {
-                Sturcture::Sum => {
-                    let mut db = f.debug_list();
-                    for b in self.binder_space.iter() {
-                        db.entry(&b);
-                    }
-                    for m in self.value_space.iter() {
-                        db.entry(&m);
-                    }
-                    db.finish()
-                }
-                Sturcture::Product => {
-                    let mut db = f.debug_tuple("");
-                    for b in self.binder_space.iter() {
-                        db.field(&b);
-                    }
-                    for m in self.value_space.iter() {
-                        db.field(&m);
-                    }
-                    db.finish()
-                }
-                Sturcture::Labeled => {
-                    let mut db = f.debug_map();
-                    for b in self.binder_space.iter() {
-                        db.entry(&"", &b);
-                    }
-                    for m in self.value_space.iter() {
-                        match m {
-                            Molecule::Expr(e) => {
-                                db.entry(&"", &e);
-                            }
-                            Molecule::Paired(Paired { key, val }) => {
-                                db.entry(key, val);
-                            }
-                        }
-                    }
-                    db.finish()
-                }
-            }
-        }
-    }
-
-    impl fmt::Debug for Molecule {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Molecule::Expr(e) => write!(f, "{:#?}", e),
-                Molecule::Paired(_) => todo!(),
-            }
-            
-        }
-    }
-
-    impl fmt::Debug for Literal {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Literal::Int(e) => write!(f, "Int({})", e),
-                Literal::Float(e) => write!(f, "Flt({})", e),
-                Literal::Str(e) => write!(f, "Str({})", e),
-                Literal::Raw(e) => write!(f, "Raw({})", e),
             }
         }
     }
@@ -424,6 +354,91 @@ mod print {
             match self {
                 Mask::Closed => write!(f, "="),
                 Mask::Exposed => write!(f, ":="),
+            }
+        }
+    }
+
+    impl fmt::Debug for Application {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "({:#?} {:#?})", self.func, self.arg)
+        }
+    }
+
+    impl fmt::Debug for ControlFlow {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                ControlFlow::Matching(e, bs) => {
+                    write!(f, "? {:#?} ", e)?;
+                    for (p, e) in bs {
+                        write!(f, "| {:#?} -> {:#?} ", p, e)?;
+                    }
+                }
+            }
+            write!(f, "")
+        }
+    }
+    
+    impl fmt::Debug for Block {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Block::Vector(blk) => {
+                    let mut db = f.debug_list();
+                    for b in blk.binder_space.iter() {
+                        db.entry(&b);
+                    }
+                    for m in blk.value_space.iter() {
+                        db.entry(&m);
+                    }
+                    db.finish()
+                }
+                Block::Tuple(blk) => {
+                    let mut db = f.debug_tuple("");
+                    for b in blk.binder_space.iter() {
+                        db.field(&b);
+                    }
+                    for m in blk.value_space.iter() {
+                        db.field(&m);
+                    }
+                    db.finish()
+                }
+                Block::HashSet(blk) => {
+                    let mut db = f.debug_set();
+                    for b in blk.binder_space.iter() {
+                        db.entry(&b);
+                    }
+                    for m in blk.value_space.iter() {
+                        db.entry(&m);
+                    }
+                    db.finish()
+                }
+                Block::HashMap(blk) => {
+                    let mut db = f.debug_map();
+                    for b in blk.binder_space.iter() {
+                        db.entry(&"", &b);
+                    }
+                    for Pair { key, val } in blk.value_space.iter() {
+                        db.entry(key, val);
+                    }
+                    db.finish()
+                }
+            }
+        }
+    }
+
+    impl fmt::Debug for Projection {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            let Projection { block, binder} = self;
+            write!(f, "{:#?}.{:#?}", block, binder)
+        }
+    }
+
+    impl fmt::Debug for Literal {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Literal::Int(e) => write!(f, "Int({})", e),
+                Literal::Float(e) => write!(f, "Flt({})", e),
+                Literal::Str(e) => write!(f, "Str({})", e),
+                Literal::Raw(e) => write!(f, "Raw({})", e),
             }
         }
     }
