@@ -5,19 +5,21 @@ pub struct Nana {
 
 #[derive(Clone)]
 pub enum Expr {
-    Binding(Binding),
+    Literal(Literal),
+    Binder(Binder),
+    Abstraction(Abstraction),
     Application(Application),
-    ControlFlow(ControlFlow),
     Block(Block),
     Projection(Projection),
-    Binder(Binder),
-    Literal(Literal),
+    ControlFlow(ControlFlow),
 }
 
 #[derive(Clone)]
-pub struct Binding {
-    pub head: Head,
-    pub expr: Box<Expr>,
+pub enum Literal {
+    Int(u64),
+    Float(f64),
+    Str(String),
+    Raw(String),
 }
 
 #[derive(Clone)]
@@ -49,15 +51,15 @@ pub enum Mask {
 }
 
 #[derive(Clone)]
-pub struct Application {
-    func: Box<Expr>,
-    arg: Box<Expr>,
+pub struct Abstraction {
+    pub head: Head,
+    pub expr: Box<Expr>,
 }
 
 #[derive(Clone)]
-pub enum ControlFlow {
-    Matching(Box<Expr>, Vec<(Pattern, Expr)>),
-    // Enumeration(Expr, Vec<Expr>)
+pub struct Application {
+    func: Box<Expr>,
+    arg: Box<Expr>,
 }
 
 #[derive(Clone)]
@@ -70,7 +72,7 @@ pub enum Block {
 
 #[derive(Clone)]
 pub struct BlockInner<Val> {
-    pub binder_space: Vec<Binding>,
+    pub binder_space: Vec<Abstraction>,
     pub value_space: Vec<Val>,
 }
 
@@ -84,14 +86,6 @@ pub struct Pair {
 pub struct Projection {
     block: Box<Expr>,
     binder: Binder,
-}
-
-#[derive(Clone)]
-pub enum Literal {
-    Int(u64),
-    Float(f64),
-    Str(String),
-    Raw(String),
 }
 
 #[derive(Clone)]
@@ -113,6 +107,12 @@ pub enum ExposurePattern {
     All
 }
 
+#[derive(Clone)]
+pub enum ControlFlow {
+    Matching(Box<Expr>, Vec<(Pattern, Expr)>),
+    // Enumeration(Expr, Vec<Expr>)
+}
+
 /// Constructing Ast with From trait
 mod construct {
     use super::*;
@@ -127,14 +127,17 @@ mod construct {
         }
     }
 
-    impl From<Binding> for Expr {
-        fn from(b: Binding) -> Self { Self::Binding(b) }
+    impl From<Literal> for Expr {
+        fn from(lit: Literal) -> Self { Self::Literal(lit) }
+    }
+    impl From<Binder> for Expr {
+        fn from(binder: Binder) -> Self { Self::Binder(binder) }
+    }
+    impl From<Abstraction> for Expr {
+        fn from(b: Abstraction) -> Self { Self::Abstraction(b) }
     }
     impl From<Application> for Expr {
         fn from(app: Application) -> Self { Self::Application(app) }
-    }
-    impl From<ControlFlow> for Expr {
-        fn from(flow: ControlFlow) -> Self { Self::ControlFlow(flow) }
     }
     impl From<Block> for Expr {
         fn from(block: Block) -> Self { Self::Block(block) }
@@ -156,34 +159,47 @@ mod construct {
             }
         }
     }
-    impl From<Binder> for Expr {
-        fn from(binder: Binder) -> Self { Self::Binder(binder) }
-    }
-    impl From<Literal> for Expr {
-        fn from(lit: Literal) -> Self { Self::Literal(lit) }
+    impl From<ControlFlow> for Expr {
+        fn from(flow: ControlFlow) -> Self { Self::ControlFlow(flow) }
     }
 
-    impl From<(Head, Expr)> for Binding {
-        fn from((head, expr): (Head, Expr)) -> Self {
-            let expr = Box::new(expr);
-            Self { head, expr }
+    impl From<u64> for Literal {
+        fn from(i: u64) -> Self {
+            Self::Int (i)
         }
     }
-    impl From<(Head, Binding)> for Binding {
-        fn from((head, binding): (Head, Binding)) -> Self {
-            (head, Expr::from(binding)).into()
+    impl From<f64> for Literal {
+        fn from(f: f64) -> Self {
+            Self::Float (f)
         }
     }
-    impl From<Pattern> for Binding {
-        fn from(pattern: Pattern) -> Self {
-            let expr = pattern.clone();
-            (Head::from(pattern), Expr::from(expr)).into()
+    impl From<String> for Literal {
+        fn from(s: String) -> Self {
+            Self::Str (s)
         }
     }
 
     impl From<String> for Binder {
         fn from(s: String) -> Self {
             Self (s)
+        }
+    }
+
+    impl From<(Head, Expr)> for Abstraction {
+        fn from((head, expr): (Head, Expr)) -> Self {
+            let expr = Box::new(expr);
+            Self { head, expr }
+        }
+    }
+    impl From<(Head, Abstraction)> for Abstraction {
+        fn from((head, binding): (Head, Abstraction)) -> Self {
+            (head, Expr::from(binding)).into()
+        }
+    }
+    impl From<Pattern> for Abstraction {
+        fn from(pattern: Pattern) -> Self {
+            let expr = pattern.clone();
+            (Head::from(pattern), Expr::from(expr)).into()
         }
     }
 
@@ -220,21 +236,15 @@ mod construct {
         }
     }
 
-    impl From<(Expr, Vec<(Pattern, Expr)>)> for ControlFlow {
-        fn from((e, branches): (Expr, Vec<(Pattern, Expr)>)) -> Self {
-            Self::Matching(Box::new(e), branches)
-        }
-    }
-
     impl From<BlockInner<Expr>> for Block {
         fn from(bi: BlockInner<Expr>) -> Self { 
             Self::Tuple(bi)
         }
     }
 
-    impl<Val> From<(Vec<Binding>, Vec<Val>)> for BlockInner<Val> {
+    impl<Val> From<(Vec<Abstraction>, Vec<Val>)> for BlockInner<Val> {
         fn from(
-            (binder_space, value_space): (Vec<Binding>, Vec<Val>)
+            (binder_space, value_space): (Vec<Abstraction>, Vec<Val>)
         ) -> Self { 
             Self { binder_space, value_space } 
         }
@@ -253,25 +263,15 @@ mod construct {
         }
     }
 
-    impl From<u64> for Literal {
-        fn from(i: u64) -> Self {
-            Self::Int (i)
-        }
-    }
-    impl From<f64> for Literal {
-        fn from(f: f64) -> Self {
-            Self::Float (f)
-        }
-    }
-    impl From<String> for Literal {
-        fn from(s: String) -> Self {
-            Self::Str (s)
-        }
-    }
-
     impl From<(Pattern, Pattern)> for Pattern {
         fn from((alias, pat): (Pattern, Pattern)) -> Self {
             Self::Alias(Box::new(alias), Box::new(pat))
+        }
+    }
+
+    impl From<(Expr, Vec<(Pattern, Expr)>)> for ControlFlow {
+        fn from((e, branches): (Expr, Vec<(Pattern, Expr)>)) -> Self {
+            Self::Matching(Box::new(e), branches)
         }
     }
 }
@@ -309,7 +309,7 @@ mod print {
     impl fmt::Debug for Expr {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
-                Self::Binding(b) => {
+                Self::Abstraction(b) => {
                     write!(f, "{:#?}", b)
                 }
                 Self::Application(app) => {
@@ -326,15 +326,26 @@ mod print {
         }
     }
 
-    impl fmt::Debug for Binding {
+    impl fmt::Debug for Literal {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "~ {:#?} {:#?}", self.head, self.expr)
+            match self {
+                Literal::Int(e) => write!(f, "Int({})", e),
+                Literal::Float(e) => write!(f, "Flt({})", e),
+                Literal::Str(e) => write!(f, "Str({})", e),
+                Literal::Raw(e) => write!(f, "Raw({})", e),
+            }
         }
     }
 
     impl fmt::Debug for Binder {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "{}", self.0)
+        }
+    }
+
+    impl fmt::Debug for Abstraction {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "~ {:#?} {:#?}", self.head, self.expr)
         }
     }
 
@@ -361,20 +372,6 @@ mod print {
     impl fmt::Debug for Application {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             write!(f, "({:#?} {:#?})", self.func, self.arg)
-        }
-    }
-
-    impl fmt::Debug for ControlFlow {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                ControlFlow::Matching(e, bs) => {
-                    write!(f, "? {:#?} ", e)?;
-                    for (p, e) in bs {
-                        write!(f, "| {:#?} -> {:#?} ", p, e)?;
-                    }
-                }
-            }
-            write!(f, "")
         }
     }
     
@@ -432,17 +429,6 @@ mod print {
         }
     }
 
-    impl fmt::Debug for Literal {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Literal::Int(e) => write!(f, "Int({})", e),
-                Literal::Float(e) => write!(f, "Flt({})", e),
-                Literal::Str(e) => write!(f, "Str({})", e),
-                Literal::Raw(e) => write!(f, "Raw({})", e),
-            }
-        }
-    }
-
     impl fmt::Debug for Pattern {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             match self {
@@ -484,6 +470,20 @@ mod print {
                 ExposurePattern::Binder(b) => write!(f, "{:#?}", b),
                 ExposurePattern::All => write!(f, ".."),
             }
+        }
+    }
+
+    impl fmt::Debug for ControlFlow {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                ControlFlow::Matching(e, bs) => {
+                    write!(f, "? {:#?} ", e)?;
+                    for (p, e) in bs {
+                        write!(f, "| {:#?} -> {:#?} ", p, e)?;
+                    }
+                }
+            }
+            write!(f, "")
         }
     }
 }

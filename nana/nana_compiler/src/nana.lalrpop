@@ -47,11 +47,11 @@ Block: Block = {
 };
 
 BlockInnerExpr: BlockInner<Expr> = {
-    <bs:Binding*> <ms:Comma<Expr>> => (bs, ms).into(),
+    <bs:Abstraction*> <ms:Comma<Expr>> => (bs, ms).into(),
 };
 
 BlockInnerPair: BlockInner<Pair> = {
-    <bs:Binding*> <ms:CommaOnce<Pair>> => (bs, ms).into(),
+    <bs:Abstraction*> <ms:CommaOnce<Pair>> => (bs, ms).into(),
 };
 
 Pair: Pair = {
@@ -70,10 +70,10 @@ Literal: Literal = {
 };
 
 // Note: Head is now guarded by "~" to reduce ambiguity.
-Binding: Binding = {
+Abstraction: Abstraction = {
     "~" <Pattern> ";" => <>.into(),
     "~" <h:Head> <e:Expr> ";" => (h,e).into(),
-    "~" <h:Head> <b:Binding> => (h,b).into(),
+    "~" <h:Head> <b:Abstraction> => (h,b).into(),
 };
 
 Binder: Binder = {
