@@ -268,8 +268,8 @@ mod print {
     use super::*;
     use std::fmt;
 
-    struct DebugVec<T, Sep> (Vec<T>, Sep);
-    impl<T, Sep> fmt::Debug for DebugVec<T, Sep> 
+    struct DebugVec<'a, T, Sep> (&'a Vec<T>, Sep);
+    impl<'a, T, Sep> fmt::Debug for DebugVec<'a, T, Sep> 
     where T: fmt::Debug, Sep: fmt::Display {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             let DebugVec(ps, s) = self;
@@ -406,8 +406,8 @@ mod print {
 
     impl fmt::Debug for Closure {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            let Closure { paras: para, block } = self;
-            write!(f, "| {:#?} | {:#?}", para, block)
+            let Closure { paras, block } = self;
+            write!(f, "| {:?} | {:#?}", DebugVec(paras, ","), block)
         }
     }
 
@@ -421,25 +421,22 @@ mod print {
                 Self::Binder(b) => write!(f, "{:#?}", b),
                 Self::Exposure(ex) => {
                     write!(f, "<")?;
-                    write!(f, "{:#?}", DebugVec(
-                        ex.iter().cloned().collect(),
-                        ";"
-                    ))?;
+                    write!(f, "{:#?}", DebugVec(ex,";"))?;
                     write!(f, ">")        
                 }
                 Self::Vector(ps) => {
                     write!(f, "[")?;
-                    write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
+                    write!(f, "{:#?}", DebugVec(ps, ","))?;
                     write!(f, "]")
                 }
                 Self::Tuple(ps) => {
                     write!(f, "(")?;
-                    write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
+                    write!(f, "{:#?}", DebugVec(ps, ","))?;
                     write!(f, ")")
                 }
                 Self::HashMap(ps) => {
                     write!(f, "{{")?;
-                    write!(f, "{:#?}", DebugVec(ps.clone(), ","))?;
+                    write!(f, "{:#?}", DebugVec(ps, ","))?;
                     write!(f, "}}")
                 }
             }
