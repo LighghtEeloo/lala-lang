@@ -96,6 +96,11 @@ Mask: Mask = {
 };
 
 Pattern: Pattern = {
+    <SetPattern>,
+    <AtomPattern>,
+};
+
+AtomPattern: Pattern = {
     "(" <AliasPattern> ")" => <>,
     <WILDCARD> => Pattern::Wild,
     <FORTHEREST> => Pattern::Rest,
@@ -104,7 +109,7 @@ Pattern: Pattern = {
     "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
     "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
     "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
-    "{" <ps:Comma<PairPattern>> "}" => Pattern::HashMap(ps),
+    "{" <ps:CommaOnce<PairPattern>> "}" => Pattern::HashMap(ps),
 };
 
 AliasPattern: Pattern = {
@@ -114,6 +119,10 @@ AliasPattern: Pattern = {
 ExposurePattern: ExposurePattern = {
     <Binder> => ExposurePattern::Binder(<>),
     <FORTHEREST> => ExposurePattern::All,
+};
+
+SetPattern: Pattern = {
+    // "{" <ps:Comma<AtomPattern>> "}" => Pattern::HashSet(ps),
 };
 
 PairPattern: (Expr, Pattern) = {
