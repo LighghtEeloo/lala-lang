@@ -6,6 +6,15 @@ pub enum Literal {
     Raw(String),
 }
 
+#[derive(Clone)]
+pub struct Binder(String);
+impl Binder {
+    pub fn name(self) -> String {
+        let Binder(s) = self;
+        s
+    }
+}
+
 /// Constructing Ast with From trait
 mod construct {
     use super::*;
@@ -25,6 +34,12 @@ mod construct {
             Self::Str (s)
         }
     }
+
+    impl From<String> for Binder {
+        fn from(s: String) -> Self {
+            Self (s)
+        }
+    }
 }
 
 /// Printing Ast.
@@ -40,6 +55,12 @@ mod print {
                 Literal::Str(e) => write!(f, "Str({})", e),
                 Literal::Raw(e) => write!(f, "Raw({})", e),
             }
+        }
+    }
+
+    impl fmt::Debug for Binder {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(f, "{}", self.0)
         }
     }
 }

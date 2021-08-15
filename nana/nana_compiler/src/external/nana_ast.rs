@@ -17,15 +17,6 @@ pub enum Expr {
 }
 
 #[derive(Clone)]
-pub struct Binder(String);
-impl Binder {
-    pub fn name(self) -> String {
-        let Binder(s) = self;
-        s
-    }
-}
-
-#[derive(Clone)]
 pub enum Mask {
     Closed,
     Exposed,
@@ -153,12 +144,6 @@ mod construct {
     }
     impl From<ControlFlow> for Expr {
         fn from(flow: ControlFlow) -> Self { Self::ControlFlow(flow) }
-    }
-
-    impl From<String> for Binder {
-        fn from(s: String) -> Self {
-            Self (s)
-        }
     }
 
     impl From<(Pattern, Mask, Expr)> for Abstraction {
@@ -309,12 +294,6 @@ mod print {
                     write!(f, "{:#?}", c)
                 }
             }
-        }
-    }
-
-    impl fmt::Debug for Binder {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "{}", self.0)
         }
     }
 
