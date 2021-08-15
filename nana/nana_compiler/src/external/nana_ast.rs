@@ -46,8 +46,8 @@ pub struct Abstraction {
 
 #[derive(Clone)]
 pub struct Application {
-    func: Box<Expr>,
-    arg: Box<Expr>,
+    pub func: Box<Expr>,
+    pub arg: Box<Expr>,
 }
 
 #[derive(Clone)]

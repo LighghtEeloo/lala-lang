@@ -16,10 +16,10 @@ impl Lexical<Expr> for Expr {
     fn lexical(self) -> Expr {
         match self {
             Expr::Abstraction(abs) => Expr::Abstraction(abs.lexical()),
-            Expr::Application(_) => self,
-            Expr::Projection(_) => self,
+            Expr::Application(app) => Expr::Application(app.lexical()),
+            Expr::Projection(p) => Expr::Projection(p.lexical()),
             Expr::GatedBlock(c) => c.lexical(),
-            // Expr::ControlFlow(_) => self,
+            Expr::ControlFlow(f) => Expr::ControlFlow(f.lexical()),
             _ => self
         }
     }
@@ -48,7 +48,6 @@ impl Lexical<Abstraction> for Abstraction {
 
 impl Lexical<Expr> for Closure {
     fn lexical(self) -> Expr {
-        // println!("cls => {:?}", self);
         match self.para {
             Some(_) => Expr::GatedBlock(Self {
                 para: self.para,
@@ -63,7 +62,6 @@ impl Lexical<Expr> for Closure {
 
 impl Lexical<Block> for Block {
     fn lexical(self) -> Block {
-        // println!("blk => {:?}", self);
         match self {
             Block::Vector(v)  => Block::Vector(v.lexical()),
             Block::Tuple(t) => Block::Tuple(t.lexical()),
@@ -75,14 +73,12 @@ impl Lexical<Block> for Block {
 
 impl Lexical<Expr> for Block {
     fn lexical(self) -> Expr {
-        // println!("blk => {:?}", self);
         match self {
             Block::Vector(_)  => {
                 let blk: Block = self.lexical();
                 Expr::from(blk)
             }
             Block::Tuple(tup)   => {
-                // let BlockInner { binder_space, value_space } = tup;
                 match (tup.binder_space.len(), tup.value_space.len()) {
                     (0, 1) => {
                         tup.value_space.last().cloned().unwrap().lexical()
@@ -107,12 +103,39 @@ impl Lexical<Expr> for Block {
 impl<Val> Lexical<BlockInner<Val>> for BlockInner<Val> 
 where Val: Lexical<Val> + std::fmt::Debug {
     fn lexical(self) -> BlockInner<Val> {
-        // println!("bin => {:?}", self.binder_space);
-        // println!("val => {:?}", self.value_space);
-        let Self { binder_space, value_space } = self;
+        let Self { binder_space: bs, value_space: vs } = self;
         Self {
-            binder_space: binder_space.into_iter().map(|a| a.lexical()).collect(),
-            value_space: value_space.into_iter().map(|v| v.lexical()).collect(),
+            binder_space: bs.into_iter().map(|a| a.lexical()).collect(),
+            value_space: vs.into_iter().map(|v| v.lexical()).collect(),
+        }
+    }
+}
+
+impl Lexical<Application> for Application {
+    fn lexical(self) -> Application {
+        Self {
+            func: Box::new(self.func.lexical()),
+            arg: Box::new(self.arg.lexical()),
+        }
+    }
+}
+
+impl Lexical<Projection> for Projection {
+    fn lexical(self) -> Projection {
+        Self {
+            block: Box::new(self.block.lexical()),
+            binder: self.binder,
+        }
+    }
+}
+
+impl Lexical<ControlFlow> for ControlFlow {
+    fn lexical(self) -> ControlFlow {
+        match self {
+            ControlFlow::Matching(e, br) => {
+                let br = br.into_iter().map(|(p, e)| (p, e.lexical())).collect();
+                ControlFlow::Matching(Box::new(e.lexical()), br)
+            }
         }
     }
 }
