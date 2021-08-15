@@ -54,8 +54,8 @@ pub enum Block {
 
 #[derive(Clone)]
 pub struct BlockInner<Val> {
-    pub binder_space: Vec<Abstraction>,
-    pub value_space: Vec<Val>,
+    pub bds: Vec<Abstraction>,
+    pub vls: Vec<Val>,
 }
 
 #[derive(Debug, Clone)]
@@ -204,16 +204,16 @@ mod construct {
 
     impl<Val> From<(Vec<Abstraction>, Vec<Val>)> for BlockInner<Val> {
         fn from(
-            (binder_space, value_space): (Vec<Abstraction>, Vec<Val>)
+            (bds, vls): (Vec<Abstraction>, Vec<Val>)
         ) -> Self { 
-            Self { binder_space, value_space } 
+            Self { bds, vls } 
         }
     }
     impl From<Closure> for BlockInner<Expr> {
         fn from(c: Closure) -> Self {
             Self {
-                binder_space: Vec::new(),
-                value_space: vec!(c.into()),
+                bds: Vec::new(),
+                vls: vec!(c.into()),
             }
         }
     }
@@ -344,40 +344,40 @@ mod print {
             match self {
                 Block::Vector(blk) => {
                     let mut db = f.debug_list();
-                    for b in blk.binder_space.iter() {
+                    for b in blk.bds.iter() {
                         db.entry(&b);
                     }
-                    for m in blk.value_space.iter() {
+                    for m in blk.vls.iter() {
                         db.entry(&m);
                     }
                     db.finish()
                 }
                 Block::Tuple(blk) => {
                     let mut db = f.debug_tuple("");
-                    for b in blk.binder_space.iter() {
+                    for b in blk.bds.iter() {
                         db.field(&b);
                     }
-                    for m in blk.value_space.iter() {
+                    for m in blk.vls.iter() {
                         db.field(&m);
                     }
                     db.finish()
                 }
                 Block::HashSet(blk) => {
                     let mut db = f.debug_set();
-                    for b in blk.binder_space.iter() {
+                    for b in blk.bds.iter() {
                         db.entry(&b);
                     }
-                    for m in blk.value_space.iter() {
+                    for m in blk.vls.iter() {
                         db.entry(&m);
                     }
                     db.finish()
                 }
                 Block::HashMap(blk) => {
                     let mut db = f.debug_map();
-                    for b in blk.binder_space.iter() {
+                    for b in blk.bds.iter() {
                         db.entry(&"", &b);
                     }
-                    for Pair { key, val } in blk.value_space.iter() {
+                    for Pair { key, val } in blk.vls.iter() {
                         db.entry(key, val);
                     }
                     db.finish()
