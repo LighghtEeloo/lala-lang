@@ -74,10 +74,10 @@ impl Lexical<Block> for Block {
 impl Lexical<Expr> for Block {
     fn lexical(self) -> Expr {
         match self {
-            Block::Vector(_)  => {
-                let blk: Block = self.lexical();
-                Expr::from(blk)
-            }
+            // Block::Vector(_)  => {
+            //     let blk: Block = self.lexical();
+            //     Expr::from(blk)
+            // }
             Block::Tuple(tup)   => {
                 match (tup.binder_space.len(), tup.value_space.len()) {
                     (0, 1) => {
@@ -88,11 +88,15 @@ impl Lexical<Expr> for Block {
                     }
                 }
             }
-            Block::HashSet(_) => {
-                let blk: Block = self.lexical();
-                Expr::from(blk)
-            }
-            Block::HashMap(_) => {
+            // Block::HashSet(_) => {
+            //     let blk: Block = self.lexical();
+            //     Expr::from(blk)
+            // }
+            // Block::HashMap(_) => {
+            //     let blk: Block = self.lexical();
+            //     Expr::from(blk)
+            // }
+            _ => {
                 let blk: Block = self.lexical();
                 Expr::from(blk)
             }
