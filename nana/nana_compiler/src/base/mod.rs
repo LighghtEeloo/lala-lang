@@ -35,9 +35,10 @@ mod construct {
         }
     }
 
-    impl From<String> for Binder {
-        fn from(s: String) -> Self {
-            Self (s)
+    impl<S> From<S> for Binder
+    where S: Into<String> {
+        fn from(s: S) -> Self {
+            Self (s.into())
         }
     }
 }
