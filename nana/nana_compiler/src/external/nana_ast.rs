@@ -1,3 +1,5 @@
+pub use crate::base::*;
+
 #[derive(Clone)]
 pub struct Nana {
     pub body: Expr,
@@ -12,14 +14,6 @@ pub enum Expr {
     Projection(Projection),
     GatedBlock(Closure),
     ControlFlow(ControlFlow),
-}
-
-#[derive(Clone)]
-pub enum Literal {
-    Int(u64),
-    Float(f64),
-    Str(String),
-    Raw(String),
 }
 
 #[derive(Clone)]
@@ -159,22 +153,6 @@ mod construct {
     }
     impl From<ControlFlow> for Expr {
         fn from(flow: ControlFlow) -> Self { Self::ControlFlow(flow) }
-    }
-
-    impl From<u64> for Literal {
-        fn from(i: u64) -> Self {
-            Self::Int (i)
-        }
-    }
-    impl From<f64> for Literal {
-        fn from(f: f64) -> Self {
-            Self::Float (f)
-        }
-    }
-    impl From<String> for Literal {
-        fn from(s: String) -> Self {
-            Self::Str (s)
-        }
     }
 
     impl From<String> for Binder {
@@ -330,17 +308,6 @@ mod print {
                 Self::ControlFlow(c) => {
                     write!(f, "{:#?}", c)
                 }
-            }
-        }
-    }
-
-    impl fmt::Debug for Literal {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            match self {
-                Literal::Int(e) => write!(f, "Int({})", e),
-                Literal::Float(e) => write!(f, "Flt({})", e),
-                Literal::Str(e) => write!(f, "Str({})", e),
-                Literal::Raw(e) => write!(f, "Raw({})", e),
             }
         }
     }
