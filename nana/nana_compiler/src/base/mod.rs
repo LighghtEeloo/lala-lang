@@ -1,3 +1,24 @@
+pub trait Inner {
+    type Target;
+    fn inner(self) -> Self::Target;
+    fn inner_ref(&self) -> &Self::Target;
+    fn inner_mut(&mut self) -> &mut Self::Target;
+}
+
+pub struct Node<T, Attr> (T, Attr);
+impl<T, Attr> Inner for Node<T, Attr> {
+    type Target = T;
+    fn inner(self) -> Self::Target {
+        self.0
+    }
+    fn inner_ref(&self) -> &Self::Target {
+        &self.0
+    }
+    fn inner_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Clone)]
 pub enum Literal {
     Int(u64),
