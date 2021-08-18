@@ -199,7 +199,7 @@ e.g.
 ]
 ```
 
-The new binding will always shadow the old one, and by the end of the evaluation, `x` is just `cow` and `y` is just `9`, end of story.
+The new binding will always shadow the old one, and by the end of the evaluation, `x` is just `"cow"` and `y` is just `9`, end of story.
 
 But shadowing doesn't come without a price. One can't write recursive functions in sequential blocks. Observe the following:
 
@@ -333,8 +333,29 @@ In Nana, one can always ensure the order of evaluation by passing a well-defined
 )
 ```
 
-`a`, `b` and `c` will be evaluated as their index order, meaning `a` first, `c` last, and will be passes into the function as [x,y,z], one after another, meaning `func [x,y,z]` => `func_x [y,z]` => `func_xy [z]` => `func_xyz`.
+`a`, `b` and `c` will be evaluated as their index order, meaning `a` first, `c` last, and will be passes into the function as `[x,y,z]`, one after another, meaning `func [x,y,z]` => `func_x [y,z]` => `func_xy [z]` => `func_xyz`.
 
+If one directly passes several arguments instead, the compiler will try its best to optimize, and no evaluation order will be guaranteed, meaning
+
+```nana
+// passing a block
+func (x,y,z) = [
+    r = ...;
+    s = ...;
+    t = ...;
+]
+func (a,b,c)
+
+// passing separated arguments
+func x y z = [
+    r = ...;
+    s = ...;
+    t = ...;
+]
+func a b c
+```
+
+One can ensure that in the first case the evaluation order will be `(a,b,c) => r => s => t`, but in the second case one may only ensure `r => s => t` obeys the order, while `a`, `b` and `c` may get evaluated at any time when `r`, `s` and `t` is been evaluated, without any given order.
 
 #### Conclusion
 
