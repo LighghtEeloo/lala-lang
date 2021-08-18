@@ -3,9 +3,10 @@ An expression oriented data notation, aimed at transpiling itself to any cascade
 
 Lala is separated into three components: `Nana`, `Lala`, and `Dada`.
 
-## Quick Examples
 
-### Direct Tranpilation
+<!-- ## Quick Examples -->
+
+<!-- ### Direct Tranpilation
 
 Some examples will be provided here as an introduction to lala.
 
@@ -13,9 +14,9 @@ Some examples will be provided here as an introduction to lala.
 - lala4css
 - lala4json
 - lala4toml
-- lala4yaml
+- lala4yaml -->
 
-### Functional Programming in Lala
+<!-- ### Functional Programming in Lala
 
 ```lala
 /* `~` means definition, like `let` or `var` */
@@ -97,7 +98,19 @@ the result is
         "exam_result": 70
     }
 }
-```
+``` -->
+
+
+## First Glance
+
+[Nana CheatSheet](nana/CheatSheet.md)
+
+
+## Language Proposals
+- Nana: [nana-lang proposal](nana/Proposal.md).
+- Lala: [lala-lang proposal](lala/Proposal.md).
+- Dada: tbd.
+
 
 ## Roadmap
 
@@ -131,12 +144,9 @@ Nana++.
 A (fake) package manager in pure lala, designed more as a structural convention than a heavy building system.
 
 
-## Language Proposal
-- Nana: [nana-lang proposal](nana/Proposal.md).
-- Lala: [lala-lang proposal](lala/Proposal.md).
-- Dada: tbd.
-
 ## Current Progress
 Using [lalrpop](https://github.com/lalrpop/lalrpop) as nana/lala's parser to Rust.
+
+Currently dealing with symbol resolution.
 
 Also here is a [todo list](Todo.md).
