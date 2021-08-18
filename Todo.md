@@ -1,9 +1,12 @@
 # Todo for Nana / Lala / Dada
 
-## Feature
+## Lexer / Parser
 1. Formal Token
     1. Use external token to trace srcinfo.
 2. Positioning info in ast.
+
+## Resolving
+1. Context
 
 ## Backlog
 1. Better `fmt::Debug` implementation. 
