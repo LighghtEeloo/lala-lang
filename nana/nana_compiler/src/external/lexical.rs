@@ -79,9 +79,9 @@ impl Lexical<Expr> for Block {
             //     Expr::from(blk)
             // }
             Block::Tuple(tup)   => {
-                match (tup.binder_space.len(), tup.value_space.len()) {
+                match (tup.bds.len(), tup.vls.len()) {
                     (0, 1) => {
-                        tup.value_space.last().cloned().unwrap().lexical()
+                        tup.vls.last().cloned().unwrap().lexical()
                     }
                     _ => {
                         Expr::from(Block::Tuple(tup.lexical()))
@@ -107,10 +107,10 @@ impl Lexical<Expr> for Block {
 impl<Val> Lexical<BlockInner<Val>> for BlockInner<Val> 
 where Val: Lexical<Val> + std::fmt::Debug {
     fn lexical(self) -> BlockInner<Val> {
-        let Self { binder_space: bs, value_space: vs } = self;
+        let Self { bds: bs, vls: vs } = self;
         Self {
-            binder_space: bs.into_iter().map(|a| a.lexical()).collect(),
-            value_space: vs.into_iter().map(|v| v.lexical()).collect(),
+            bds: bs.into_iter().map(|a| a.lexical()).collect(),
+            vls: vs.into_iter().map(|v| v.lexical()).collect(),
         }
     }
 }
