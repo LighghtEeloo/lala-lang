@@ -1,15 +1,17 @@
-Nana = Block ;
+Nana = BlockInner ;
 
-Block = "(", [BinderSpace], [ValueSpaceExpr], ")"         (* Parallel   / Tuple   *) 
-      | "[", [BinderSpace], [ValueSpaceExpr], "]"         (* Sequential / List    *)
-      | "{", [BinderSpace], [ValueSpaceExpr], "}"         (* Dependent  / HashSet *)
-      | "{", [BinderSpace], ValueSpacePaired, "}"         (* Dependent  / HashMap *)
+Block = "(", BlockInner, ")"                         (* Parallel   / Tuple   *) 
+      | "[", BlockInner, "]"                         (* Sequential / List    *)
+      | "{", BlockInner, "}"                         (* Dependent  / HashSet *)
+      | "{", [BinderSpace], ValueSpacePair, "}"    (* Dependent  / HashMap *)
       ;
+
+BlockInner = [BinderSpace], [ValueSpaceExpr] ;
 
 BinderSpace = { Binding } ;
 
 ValueSpaceExpr = Expr, { Expr } ;
-ValueSpaceExpr = Paired, { Paired } ;
+ValueSpacePair = Pair, { Pair } ;
 
 
 (* Both for value and function definition. *)
@@ -20,7 +22,7 @@ Binding = Pattern, Bridge, Expr, ";"
 Binder = IDENT ;
 Bridge = "=" | ":=" ;
 
-Paired = AtomExpr, ":", Expr;
+Pair = AtomExpr, ":", Expr;
 
 
 (* All exprs. *)
