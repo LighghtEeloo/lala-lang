@@ -1,0 +1,104 @@
+Nana = Block ;
+
+Block = "(", [BinderSpace], [ValueSpaceExpr], ")"         (* Parallel   / Tuple   *) 
+      | "[", [BinderSpace], [ValueSpaceExpr], "]"         (* Sequential / List    *)
+      | "{", [BinderSpace], [ValueSpaceExpr], "}"         (* Dependent  / HashSet *)
+      | "{", [BinderSpace], ValueSpacePaired, "}"         (* Dependent  / HashMap *)
+      ;
+
+BinderSpace = { Binding } ;
+
+ValueSpaceExpr = Expr, { Expr } ;
+ValueSpaceExpr = Paired, { Paired } ;
+
+
+(* Both for value and function definition. *)
+Binding = Pattern, Bridge, Expr, ";"
+        | Binder, Pattern, { Pattern }, Bridge, Expr, ";" 
+        ;
+
+Binder = IDENT ;
+Bridge = "=" | ":=" ;
+
+Paired = AtomExpr, ":", Expr;
+
+
+(* All exprs. *)
+Expr = AtomExpr
+     | InfixExpr
+     | Closure
+     | Application
+     | PatternMatching
+     ;
+(* In fact, the Expr should be further divided to ensure that 
+      - Closure, 
+      - InfixExpr, 
+      - Application and 
+      - PatternMatching 
+ * are of different priority. 
+ *)
+
+(* `expr + expr` *)
+InfixExpr = Expr Symbol AtomExpr ;
+(* Haven't really thought carefully, so personally I haven't supported it. 
+ * Symbol is not defined neither.
+ *)
+
+(* The most separated expr, with highest priority. *)
+AtomExpr = Literal
+         | Binder
+         | Block
+         | Projection
+         ;
+
+
+Closure = "|" [Pattern] { ",", Pattern }, [","] "|", Block;
+
+Application = Expr, AtomExpr; 
+(* Application itself is Expr, so it's a recursive definition, with correct associativity. *)
+
+
+Literal = INTCONST | FLOATCONST | STRCONST | RAWCONST ;
+Projection = AtomExpr "." Binder ;
+
+PatternMatching = "?", AtomExpr, Branch, { Branch } ;
+
+Branch = "|", Pattern, "->", AtomExpr ;
+
+Pattern = "(", AliasPattern, ")"
+        | WILDCARD
+        | FORALL
+        | Literal
+        | Binder
+        | BlockPattern
+        | ExposurePattern
+        ;
+
+(* alias = original *)
+AliasPattern = Pattern, "=", Pattern ;
+
+BlockPattern = "(", { Pattern } , ")" 
+             | "[", { Pattern } , "]"
+             | "{", { Expr } , "}"
+             | "{", Expr, ":", Pattern, { Expr, ":", Pattern } , "}"
+             ;
+
+ExposurePattern = "<", { Pattern }, ">" ;
+
+
+
+
+
+IDENT = r"_?[a-zA-Z][_0-9a-zA-Z]*'*" ;
+
+WILDCARD = "_" ;
+FORALL = ".." ;
+
+DEC = r"[\+-]?[0-9]+" ;
+HEX = r"[\+-]?0[xX][0-9a-fA-F]+" ;
+INTCONST = DEC | HEX ;
+
+FLOATCONST = r"[0-9]*\.[0-9]+([eE][-\+]?[0-9]+)?" | r"[0-9]+[eE][-\+]?[0-9]+" ;
+
+STRCONST = '"', r"([^"\\]|\\.)*", '"' ;
+RAWCONST = r"\[\|.*\|\]" ;              (* needs to be improved to support nesting *)
