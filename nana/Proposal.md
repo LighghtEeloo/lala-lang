@@ -68,7 +68,17 @@ where `a` and `b` are binders. You may see them as "variables" or "functions". T
 (1, 2)
 ```
 
-But that's only half the story. The binding are still kept for reuse during the hole compilation, which means:
+Do note that every block is consist of a binder space and a value space, as shown above.
+
+```nana
+(
+    a := 1; // binder space
+    b := 2;
+    a, b    // value space
+)
+```
+
+In the example above we evaluated the block and retrived its value. But that's only half the story. The bindings are still kept for reuse during the hole compilation, which means:
 
 ```nana
 (
@@ -128,7 +138,7 @@ More information can be found at [Gated Block](#gated-block) section.
 
 ## Binder Space
 
-A kindly note: `:=` and `=` are introduced to control visibility, but they all means binding. Now you can just treat them as the same thing. We'll get to this later.
+A kindly note: `:=` and `=` are introduced to control visibility, but they all mean binding. Now you can just treat them as the same thing. We'll get to this [later](#visibility).
 
 ### Sequence of Computation
 
@@ -157,8 +167,8 @@ e.g.
 (
     a = 1;
     b = 2;
-    c = a; // error, using sibling `a`
-    a = 4; // error, binder `a` has been defined
+    c = a; // error: using sibling `a`
+    a = 4; // error: binder `a` has been defined
 )
 ```
 
@@ -191,7 +201,7 @@ e.g.
 ```nana
 [
     x = 4;
-    x = y;      // error, binder `y` is not defined
+    x = y;      // error: binder `y` is not defined
     y = x;      // 4
     x := x + 1; // 5
     y := y + x; // 9
@@ -246,7 +256,7 @@ e.g.
 ```nana
 {
     a = 1;
-    a = 2; // error, binder `a` has been defined
+    a = 2; // error: binder `a` has been defined
 
     // insertion sort
     insert x l = (
@@ -365,7 +375,143 @@ One can ensure that in the first case the evaluation order will be `(a,b,c) => r
 | Sequential  | `[]`   | Previous    | Yes       | None      |
 | Dependent   | `{}`   | Two-ways    | No        | Mutual    |
 
-### Exposure
+### Visibility
+
+Now that binders are defined in our binder space and will eventually be used in some value space (otherwise the binder would be meaningless), when a binder is discovered in a value space, how should we resolve this binder?
+
+Nana has provided a scope-wise resolution. The rules are simple:
+1. A value space can access the whole of its corresponding binder space.
+```nana
+(
+    binder = (); // binder space
+    binder       // value space: uses `binder`
+)
+```
+2. Within the same binder space, during the definition of each binder, one may access the parent binder space according to the property of the parent block.
+   1. In the case of a `()` parent block: only the binder itself can be accessed.
+   ```nana
+   (
+       sibling = ();
+       binder = ...; // within `...` only `binder` can be used.
+   )
+   ```
+   2. In the case of a `[]` parent block: only the binders that appears beforehand can be accessed, excluding the current binder.
+   ```nana
+   [
+       sibling = ();
+       binder = ...; // within `...` only `sibling` can be used.
+       another = ();
+   ]
+   ```
+   3. In the case of a `{}` parent block: all binders, including the current binder itself, can be accessed.
+   ```nana
+   {
+       sibling = ();
+       binder = ...; // within `...`, `sibling` `binder` and `another` can all be used.
+       another = ();
+   }
+   ```
+
+If you are familiar with any functional language, or Rust's module system, you'll find it quite similar.
+
+#### Exposure
+
+```nana
+(
+    <a; b; c> = (
+        a := 1;
+        b := 2;
+        c := 3;
+    );
+)
+```
+
+is equivalent to
+
+```nana
+(
+    blk = (
+        a := 1;
+        b := 2;
+        c := 3;
+    );
+    a = blk.a;
+    b = blk.b;
+    c = blk.c;
+)
+```
+
+You may also use
+
+```nana
+(
+    <..> = (
+        a := 1;
+        b := 2;
+        c := 3;
+    );
+)
+```
+
+to abstract all available binders.
+
+#### Encapsulation
+
+One may choose not to expose all binders in the binder space of a block.
+
+```nana
+(
+    <..> = (
+        a := 1; // exposed
+        b = 2;  // not exposed
+        c = 3;  // not exposed
+    );
+)
+```
+
+is equivalent to
+
+```nana
+(
+    <a> = (
+        a := 1; // exposed
+        b = 2;  // not exposed
+        c = 3;  // not exposed
+    );
+)
+```
+
+An unexposed binder is by no means visible to the outer scope.
+
+```nana
+(
+    blk = (
+        a := 1; // exposed
+        b = 2;  // not exposed
+        c = 3;  // not exposed
+    );
+    x = blk.a;  // 1
+    y = blk.b;  // error: binder `b` is not exposed
+    <c> = blk;  // error: binder `c` is not exposed
+)
+```
+
+#### Free and Local Binders
+
+Consider the following scenario:
+
+```nana
+[
+    a = 1;
+]
+```
+
+A generalized question would be: when a binder is used in a value space, 
+
+#### Sequence of Computation in Exposure
+
+
+
 
 ### Function Binding and Gated Block
 
@@ -376,5 +522,9 @@ One can ensure that in the first case the evaluation order will be `(a,b,c) => r
 
 
 ## Gated Block
+
+### Capturing
+
+### Currying
 
 ## Pattern Language
