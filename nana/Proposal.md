@@ -19,7 +19,7 @@ All terms in `nana` will eventually converge to an expression.
     - Application
     - Projection
 
-We will discuss them one by one.
+We will discuss them in the following chapters.
 
 ## Block - Introduction
 
@@ -138,11 +138,9 @@ More information can be found at [Gated Block](#gated-block) section.
 
 ## Binder Space
 
-A kindly note: `:=` and `=` are introduced to control visibility, but they all mean binding. Now you can just treat them as the same thing. We'll get to this [later](#visibility).
+A kindly note: `:=` and `=` are introduced to control visibility, but they all mean binding. Now you can just treat them as the same thing. We'll get to this [later](#encapsulation).
 
 ### Sequence of Computation
-
-#### Overview
 
 Learning from classical Monad idea, as well as some modifications, three forms of computation sequences are introduced.
 
@@ -375,6 +373,36 @@ One can ensure that in the first case the evaluation order will be `(a,b,c) => r
 | Sequential  | `[]`   | Previous    | Yes       | None      |
 | Dependent   | `{}`   | Two-ways    | No        | Mutual    |
 
+
+### Function Binding and Gated Block
+
+Functions are binders that bind to gated blocks.
+
+```nana
+add := |x, y| ( x + y ); // equals to
+add x y := ( x + y );
+```
+
+As mentioned in block introduction, the latter notation is just a syntax sugar to the previous one.
+
+Any block can be gated. A gate controls how arguments are passed into the gated block, in the form that is called *gate parameter*. `x` and `y` above are all gate parameters.
+
+A gated block can be applied as such:
+
+```nana
+res = add 1 2; // 3, where x = 1 and y = 2
+```
+
+Also every block is syntatically equal to its empty-gated form:
+
+```nana
+x := || ( 1 + 2 ); // 3
+```
+
+All bindings in the gated block can use the gate parameter, because as for the computation order, the arguments will be evaluated before it passes into the gate. 
+
+// Todo..
+
 ### Visibility
 
 Now that binders are defined in our binder space and will eventually be used in some value space (otherwise the binder would be meaningless), when a binder is discovered in a value space, how should we resolve this binder?
@@ -412,9 +440,74 @@ Nana has provided a scope-wise resolution. The rules are simple:
    }
    ```
 
+
+#### Free and Local Binders
+
+Consider the following scenario:
+
+```nana
+[
+    a = 1;
+    b = (
+        a = 2;
+        c = a;
+        c, a
+    );
+]
+```
+
+How do we know what's the value of `b`? Or a generalized question could be asked: when a binder is used in a value space, how can we determine how it is resolved?
+
+A concise rule would be:
+1. The core rule is proximity. The binder will always be resolved as the nearest definition possible.
+2. The binder space of the block that the binder is in will first be searched according to the rule of the block. See [visibility section](#visibility) for the detail.
+3. If no candidate was found, then the gate of the block will be searched. If the gate is empty, or no gate is presented, skip.
+4. If still not found, repeat 2 and 3 for the parent block of the block searched above.
+5. If the top block is searched and still no candidate matches, an error will be prompt.
+
+
+Therefore, the value of `b` above would be `(1, 2)`, because:
+
+```nana
+[              // the top block, calling it `[]`
+    a = 1;
+    b = (      // within block `b`, `a = 1` from block `[]` can be used
+        a = 2; // `a = 2` defined in block `b`
+        c = a; // according to block rule, only `a = 1` can be seen, so `c = 1`
+        c, a   // `c = 1` from block `b`; and `a = 2` in block `b`
+    );
+]
+```
+
+Moreover, the following example shows the usage of gated block:
+
+```nana
+{                       // the top block, call it `{}`
+    x = 1;              // `x = 1` in block `{}`
+    f = |x| (           // gated block `f` with parameter `x`
+        g = |y| (       // gated block `g` with parameter `y`
+            h = |x| (   // gated block `h` with parameter `x`
+                x = 2;  // `x = 2` defined in block `h`
+                a = x;  // `a = x` where `x` is gated in block `h`
+                a, x    // `x, 2` where `x` is gated in block `h`
+            );
+            h x         // apply `x` on `h` where `x` is gated in block `f`
+        );
+        g x             // apply `x` on `g` where `x` is gated in block `f`
+    );
+    f x                 // apply `x` on `f` where `x` is `x = 1` in block `{}`
+                        // The result will be `{(1, 2)}`.
+}
+```
+
 If you are familiar with any functional language, or Rust's module system, you'll find it quite similar.
 
+Though programmers should not rely on those tricky naming strategy, and preferably name their binders in an unambiguous way, it's necessary to understand how binders are resolved.
+
+
 #### Exposure
+
+To directly expose one or more binders in a block, one may choose to use the exposure pattern.
 
 ```nana
 (
@@ -423,6 +516,9 @@ If you are familiar with any functional language, or Rust's module system, you'l
         b := 2;
         c := 3;
     );
+    (
+       // ...
+    )
 )
 ```
 
@@ -435,9 +531,14 @@ is equivalent to
         b := 2;
         c := 3;
     );
-    a = blk.a;
-    b = blk.b;
-    c = blk.c;
+    (
+       a = blk.a;
+       b = blk.b;
+       c = blk.c;
+       (
+          // ...
+       )
+    )
 )
 ```
 
@@ -454,6 +555,9 @@ You may also use
 ```
 
 to abstract all available binders.
+
+Note that the exposure can only be performed on an ungated / empty-gated block.
+
 
 #### Encapsulation
 
@@ -496,28 +600,35 @@ An unexposed binder is by no means visible to the outer scope.
 )
 ```
 
-#### Free and Local Binders
-
-Consider the following scenario:
-
-```nana
-[
-    a = 1;
-]
-```
-
-A generalized question would be: when a binder is used in a value space, 
-
 #### Sequence of Computation in Exposure
 
+// Todo..
 
+In short, if an exposure is performed on a block, then the binders abstracted will be calculated with the same order as the rule of the block. It means that the exposed binder will not wait until the whole block is done calculating; when permitted, the binder will take the partially calculated result in the block and be calculated in the parent block.
 
+```nana
+(
+    <a> = {
+        undone := undone; // dead-loop
+        a := 1;
+    }
+    a                     // 1
+)
+```
 
-### Function Binding and Gated Block
-
+The `undone` will not be evaluated because only `a` is required.
 
 
 ## Value Space
+
+### Block Degeneration
+
+#### The Unique Role That Tuple Plays
+
+### Implementations of Block Evaluation
+
+
+
 
 
 
@@ -526,5 +637,9 @@ A generalized question would be: when a binder is used in a value space,
 ### Capturing
 
 ### Currying
+
+
+
+
 
 ## Pattern Language
