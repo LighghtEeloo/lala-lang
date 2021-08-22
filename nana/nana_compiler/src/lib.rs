@@ -1,5 +1,6 @@
 mod base;
 mod external;
+mod flatten;
 // mod resolve;
 use external::ast as nana_ast;
 
@@ -7,3 +8,5 @@ use external::ast as nana_ast;
 lalrpop_mod!(pub nana);
 
 // pub use external::Lexical;
+
+pub use flatten::Flatten;

@@ -1,3 +1,5 @@
+//! External Language Ast. The language ast for nana.
+
 pub use crate::base::*;
 
 #[derive(Clone, Debug)]
