@@ -19,10 +19,10 @@ Block: Block = {
         let (bds, vls) = bi;
         Block::Set(bds, vls)
     },
-    // "{" <bi:BlockInnerMap> "}" => B{
-    //     let (bds, vls) = bi;
-    //     Block::Map(bds, vls)
-    // },
+    "{" <bi:BlockInnerMap> "}" => {
+        let (bds, vls) = bi;
+        Block::Map(bds, vls)
+    },
 };
 
 BlockInner: (Vec<Abstraction>, Vec<Expr>) = {

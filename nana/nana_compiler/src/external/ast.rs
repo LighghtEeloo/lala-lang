@@ -18,7 +18,7 @@ pub enum Block {
     Tuple(Vec<Abstraction>, Vec<Expr>),
     List(Vec<Abstraction>, Vec<Expr>),
     Set(Vec<Abstraction>, Vec<Expr>),
-    // Map(Vec<Abstraction>, Vec<Pair>),
+    Map(Vec<Abstraction>, Vec<Pair>),
 }
 
 pub type BlockInner = (Vec<Abstraction>, Vec<Expr>);

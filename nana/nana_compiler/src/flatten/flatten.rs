@@ -63,6 +63,12 @@ impl Flatten<fa::Block> for ea::Block {
                     vls.into_iter().map(|x| x.flatten()).collect()
                 )
             }
+            ea::Block::Map(bds, vls) => {
+                fa::Block::Map(
+                    bds.into_iter().map(|x| x.flatten()).collect(),
+                    vls.into_iter().map(|x| x.flatten()).collect()
+                )
+            }
         }
     }
 }
@@ -138,12 +144,22 @@ impl Flatten<fa::Expr> for ea::Block {
                 }
             }
             ea::Block::List(_, _) |
-            ea::Block::Set(_, _) => {
+            ea::Block::Set(_, _) |
+            ea::Block::Map(_, _) => {
                 fa::Expr::GatedBlock(fa::GatedBlock {
                     traces: Vec::new(),
                     block: self.flatten(),
                 })
             }
+        }
+    }
+}
+
+impl Flatten<fa::Pair> for ea::Pair {
+    fn flatten(self) -> fa::Pair {
+        fa::Pair {
+            key: self.key.flatten(),
+            val: self.val.flatten(),
         }
     }
 }
