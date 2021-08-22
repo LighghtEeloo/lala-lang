@@ -2,7 +2,7 @@ use std::io::Read;
 
 use nana_compiler::{
     nana,
-    Lexical
+    Flatten,
 };
 
 fn main() -> anyhow::Result<()> {
@@ -29,9 +29,9 @@ fn main() -> anyhow::Result<()> {
 fn parse_nana(code: &String) {
     let res = nana::NanaParser::new().parse(code);
     match res {
-        Ok(res) => {
-            println!("{:#?}", res);
-            let nana = res.lexical();
+        Ok(nana) => {
+            // println!("{:#?}", nana);
+            let nana = nana.flatten();
             println!("{:#?}", nana);
         }
         Err(e) => {
@@ -43,27 +43,31 @@ fn parse_nana(code: &String) {
 
 
 fn code_base() -> Vec<String> {
-    vec![ format!("{}", r#"
-pi := (
-    ~ (<pi; double; id; idd> = pi_m) = [
-        murmur := "...\"";
-        id := |x| (x);
-        ~ tuple x y := (x,y);
-        double := |x| (tuple x x);
-        ~ idd x' := [
-            ~ x' ;
-            ~ (x, y) := x';
-            x
-        ];
-        ~ dine := ~ <..> := (
-            divine := [|jail|];
-            divine := [1, 0x2f, 3.0, .4, 5e1];
-            3.1415926
-        );
-        pi := id dine;
-    ];
-    pi_m.pi
-);
+    vec![ 
+//     format!("{}", r#"
+// pi := (
+//     ~ (<pi; double; id; idd> = pi_m) = [
+//         murmur := "...\"";
+//         id := |x| (x);
+//         ~ tuple x y := (x,y);
+//         double := |x| (tuple x x);
+//         ~ idd x' := [
+//             ~ x' ;
+//             ~ (x, y) := x';
+//             x
+//         ];
+//         ~ dine := ~ <..> := (
+//             divine := [|jail|];
+//             divine := [1, 0x2f, 3.0, .4, 5e1];
+//             3.1415926
+//         );
+//         pi := id dine;
+//     ];
+//     pi_m.pi
+// );
+//     "#),
+    format!("{}", r#"
+()
     "#),
     format!("{}", r#"
 lam := || (
