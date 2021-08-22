@@ -7,25 +7,25 @@ pub struct Nana {
 
 #[derive(Clone, Debug)]
 pub struct GatedBlock {
-    pub trace: Option<Binder>,
+    pub traces: Vec<Binder>,
     pub block: Block
 }
 
 #[derive(Clone, Debug)]
 pub enum Block {
-    Tuple(Vec<Binding>, Vec<Expr>),
-    List(Vec<Binding>, Vec<Expr>),
-    Set(Vec<Binding>, Vec<Expr>),
-    Map(Vec<Binding>, Vec<Pair>),
+    Tuple(Vec<Abstraction>, Vec<Expr>),
+    List(Vec<Abstraction>, Vec<Expr>),
+    Set(Vec<Abstraction>, Vec<Expr>),
+    // Map(Vec<Abstraction>, Vec<Pair>),
 }
 
-pub type BlockInner = (Vec<Binding>, Vec<Expr>);
+pub type BlockInner = (Vec<Abstraction>, Vec<Expr>);
 
 #[derive(Clone, Debug)]
-pub struct Binding {
+pub struct Abstraction {
     pub trace: Binder,
     pub exposed: bool,
-    pub src: GatedBlock,
+    pub src: Expr,
 }
 
 #[derive(Clone, Debug)]
@@ -38,6 +38,7 @@ pub struct Pair {
 pub enum Expr {
     Literal(Literal),
     Binder(Binder),
+    Block(Block),
     GatedBlock(GatedBlock),
     Application(Box<Expr>, Box<Expr>),
     Projection(Box<Expr>, Binder),
@@ -64,20 +65,13 @@ mod construct {
     }
     impl From<Block> for GatedBlock {
         fn from(block: Block) -> Self {
-            Self { trace: None, block }
+            (Vec::new(), block).into()
         }
     }
     /// Insert from last to first.
     impl From<(Vec<Binder>, Block)> for GatedBlock {
-        fn from((mut traces, block): (Vec<Binder>, Block)) -> Self {
-            let head = traces.pop();
-            match head {
-                Some(t) => Self {
-                    trace: Some(t),
-                    block: GatedBlock::from((traces, block)).into(),
-                },
-                None => block.into(),
-            }
+        fn from((traces, block): (Vec<Binder>, Block)) -> Self {
+            Self { traces, block }
         }
     }
 
@@ -94,6 +88,12 @@ mod construct {
     impl From<GatedBlock> for Block {
         fn from(e: GatedBlock) -> Self {
             Expr::GatedBlock(e).into()
+        }
+    }
+
+    impl From<(Binder, bool, Expr)> for Abstraction {
+        fn from((trace, exposed, src): (Binder, bool, Expr)) -> Self {
+            Self { trace, exposed, src }
         }
     }
 

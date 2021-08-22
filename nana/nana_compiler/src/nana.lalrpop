@@ -25,15 +25,15 @@ Block: Block = {
     // },
 };
 
-BlockInner: (Vec<Binding>, Vec<Expr>) = {
+BlockInner: (Vec<Abstraction>, Vec<Expr>) = {
     <bds:BinderSpace> <vls:ValueSpaceExpr> => (bds, vls),
 };
-BlockInnerMap: (Vec<Binding>, Vec<Pair>) = {
+BlockInnerMap: (Vec<Abstraction>, Vec<Pair>) = {
     <bds:BinderSpace> <vls:ValueSpacePair> => (bds, vls),
 };
 
 #[inline]
-BinderSpace: Vec<Binding> = <Binding*>;
+BinderSpace: Vec<Abstraction> = <Abstraction*>;
 
 #[inline]
 ValueSpaceExpr: Vec<Expr> = Comma<Expr>;
@@ -41,10 +41,10 @@ ValueSpaceExpr: Vec<Expr> = Comma<Expr>;
 ValueSpacePair: Vec<Pair> = CommaOnce<Pair>; // To avoid confusion
 
 // Todo: Pattern
-Binding: Binding = {
+Abstraction: Abstraction = {
     <b:Binder> <br:Bridge> <e:Expr> ";" => {
-        Binding { trace: b, exposed: br, src: e.into() }
-    }
+        (b, br, e).into()
+    },
 };
 
 Binder: Binder = {
@@ -68,8 +68,7 @@ Expr: Expr = {
 
 // Todo: Pattern; AtomExpr.
 GatedBlock: GatedBlock = {
-    "|" <mut args:Comma<Binder>> "|" <blk:Block> => {
-        args.reverse();
+    "|" <args:Comma<Binder>> "|" <blk:Block> => {
         (args, blk).into()
     }
 };
@@ -83,7 +82,7 @@ AppExpr: Expr = {
 AtomExpr: Expr = {
     <Literal> => Expr::Literal(<>),
     <Binder> => Expr::Binder(<>),
-    <Block> => Expr::GatedBlock(<>.into()),
+    <Block> => Expr::Block(<>),
     <Projection> => {
         let (a, b) = <>;
         Expr::Projection(Box::new(a), b)
