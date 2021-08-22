@@ -1,12 +1,12 @@
 mod base;
 mod external;
-mod resolve;
+// mod resolve;
 use external::nana_ast;
 
 #[macro_use] extern crate lalrpop_util;
 lalrpop_mod!(pub nana);
 
-pub use external::Lexical;
+// pub use external::Lexical;
 
 #[cfg(test)]
 mod tests {

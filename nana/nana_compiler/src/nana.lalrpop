@@ -3,138 +3,102 @@ use crate::nana_ast::*;
 grammar;
 
 pub Nana: Nana = {
-    <BlockInnerExpr> => <>.into(),
+    <BlockInner> => <>.into(),
 };
 
-Expr: Expr = {
-    <FlowExpr>,
-    <Closure> => <>.into(),
+Block: Block = {
+    "(" <bi:BlockInner> ")" => {
+        let (bds, vls) = bi;
+        Block::Tuple(bds, vls)
+    },
+    "[" <bi:BlockInner> "]" => {
+        let (bds, vls) = bi;
+        Block::List(bds, vls)
+    },
+    "{" <bi:BlockInner> "}" => {
+        let (bds, vls) = bi;
+        Block::Set(bds, vls)
+    },
+    // "{" <bi:BlockInnerMap> "}" => B{
+    //     let (bds, vls) = bi;
+    //     Block::Map(bds, vls)
+    // },
 };
 
-FlowExpr: Expr = {
-    <AppExpr>,
-    <ControlFlow> => <>.into(),
+BlockInner: (Vec<Binding>, Vec<Expr>) = {
+    <bds:BinderSpace> <vls:ValueSpaceExpr> => (bds, vls),
+};
+BlockInnerMap: (Vec<Binding>, Vec<Pair>) = {
+    <bds:BinderSpace> <vls:ValueSpacePair> => (bds, vls),
 };
 
-AppExpr: Expr = {
-    <AtomExpr>,
-    <Application> => <>.into(),
-};
+#[inline]
+BinderSpace: Vec<Binding> = <Binding*>;
 
-/// A semantically minimal expr, 
-/// meaning that AtomExpr must be associated within itself.
-///
-/// Note that `()` wrapped expr is now in Struct(Tuple).
-AtomExpr: Expr = {
-    <Literal> => <>.into(),
-    <Binder> => <>.into(),
-    <Block> => <>.into(),
-    <Projection> => <>.into(),
-};
+#[inline]
+ValueSpaceExpr: Vec<Expr> = Comma<Expr>;
+#[inline]
+ValueSpacePair: Vec<Pair> = CommaOnce<Pair>; // To avoid confusion
 
-Application: Application = {
-    <func:AppExpr> <arg:AtomExpr> => (func,arg).into(),
-};
-
-Literal: Literal = {
-    <INTCONST> => <>.into(),
-    <FLTCONST> => <>.into(),
-    <STRCONST> => <>.into(),
-    <RAWCONST> => Literal::Raw(<>.into()),
+// Todo: Pattern
+Binding: Binding = {
+    <b:Binder> <br:Bridge> <e:Expr> ";" => {
+        Binding { trace: b, exposed: br, src: e.into() }
+    }
 };
 
 Binder: Binder = {
     <IDENT> => <>.into(),
-    <UIDENT> => <>.into(),
-    <SYMBOLIDENT> => <>.into(),
 };
 
-Block: Block = {
-    "[" <BlockInnerExpr> "]" => Block::Vector(<>),
-    "(" <BlockInnerExpr> ")" => Block::Tuple(<>),
-    "{" <BlockInnerExpr> "}" => Block::HashSet(<>),
-    "{" <BlockInnerPair> "}" => Block::HashMap(<>),
-};
-
-BlockInnerExpr: BlockInner<Expr> = {
-    <bs:Abstraction*> <ms:Comma<Expr>> => (bs, ms).into(),
-};
-
-BlockInnerPair: BlockInner<Pair> = {
-    <bs:Abstraction*> <ms:CommaOnce<Pair>> => (bs, ms).into(),
+Bridge: bool = {
+    ":=" => true,
+    "=" => false,
 };
 
 Pair: Pair = {
-    <k:AppExpr> ":" <v:Expr> => (k, v).into(),
-}
-
-Projection: Projection = {
-    <e:AtomExpr> "." <b:Binder> => (e, b).into(),
+    <a:AtomExpr> ":" <e:Expr> => (a, e).into()
 };
 
-Closure: Closure = {
-    "|" <ps:Comma<Pattern>> "|" <b:Block> => (ps, b).into()
+// Todo: FlowExpr; InfixExpr.
+Expr: Expr = {
+    <AppExpr>,
+    <GatedBlock> => Expr::GatedBlock(<>),
 };
 
-Abstraction: Abstraction = {
-    <b:Binder> <m:Mask> <e:Expr> ";" => (b, m, e).into(),
-    // Note: Pattern heads are now guarded by "~" to reduce ambiguity.
-    "~" <b:Binder> <ps:Pattern+> <m:Mask> <blk: Block> ";" => (b, m, Closure::from((ps, blk)).into()).into(),
-    "~" <Pattern> ";" => <>.into(),
-    "~" <p:Pattern> <m:Mask> <e:Expr> ";" => (p, m, e).into(),
-    "~" <p:Pattern> <m:Mask> <abs:Abstraction> => (p, m, Expr::from(abs)).into(),
+// Todo: Pattern; AtomExpr.
+GatedBlock: GatedBlock = {
+    "|" <mut args:Comma<Binder>> "|" <blk:Block> => {
+        args.reverse();
+        (args, blk).into()
+    }
 };
 
-// Head: Head = {
-//     <b:Binder> <ps:Pattern+> <m:Mask> => (b,ps,m).into(),
-//     <p:Pattern> <m:Mask> => (p,m).into(),
-// };
-
-Mask: Mask = {
-    "=" => Mask::Closed,
-    ":=" => Mask::Exposed,
+AppExpr: Expr = {
+    <AtomExpr>,
+    <f:AppExpr> <a:AtomExpr> => 
+        Expr::Application(Box::new(f), Box::new(a)),
 };
 
-Pattern: Pattern = {
-    <SetPattern>,
-    <AtomPattern>,
+AtomExpr: Expr = {
+    <Literal> => Expr::Literal(<>),
+    <Binder> => Expr::Binder(<>),
+    <Block> => Expr::GatedBlock(<>.into()),
+    <Projection> => {
+        let (a, b) = <>;
+        Expr::Projection(Box::new(a), b)
+    }
 };
 
-AtomPattern: Pattern = {
-    "(" <AliasPattern> ")" => <>,
-    <WILDCARD> => Pattern::Wild,
-    <FORTHEREST> => Pattern::Rest,
-    <Literal> => Pattern::Literal(<>),
-    <Binder> => Pattern::Binder(<>),
-    "<" <SemiColonOnce<ExposurePattern>> ">" => Pattern::Exposure(<>),
-    "[" <ps:Comma<Pattern>> "]" => Pattern::Vector(ps),
-    "(" <ps:Comma<Pattern>> ")" => Pattern::Tuple(ps),
-    "{" <ps:CommaOnce<PairPattern>> "}" => Pattern::HashMap(ps),
+Literal: Literal = {
+    <INTCONST> => Literal::Int(<>),
+    <FLTCONST> => Literal::Float(<>),
+    <STRCONST> => Literal::Str(<>),
+    <RAWCONST> => Literal::Raw(<>),
 };
 
-AliasPattern: Pattern = {
-    <p:Pattern> "=" <al:Pattern> => (al, p).into(),
-}
-
-ExposurePattern: ExposurePattern = {
-    <Binder> => ExposurePattern::Binder(<>),
-    <FORTHEREST> => ExposurePattern::All,
-};
-
-SetPattern: Pattern = {
-    // "{" <ps:Comma<AtomPattern>> "}" => Pattern::HashSet(ps),
-};
-
-PairPattern: (Expr, Pattern) = {
-    <e:AppExpr> ":" <p:Pattern> => (e, p),
-}
-
-ControlFlow: ControlFlow = {
-    "?" <e:AppExpr> <bs:MatchingBranch+> => (e, bs).into(),
-};
-
-MatchingBranch: (Pattern, Expr) = {
-    "|" <p:Pattern> "->" <e:AppExpr> => (p, e),
+Projection: (Expr, Binder) = {
+    <a:AtomExpr> "." <b:Binder> => (a, b),
 };
 
 // Identifiers
