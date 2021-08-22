@@ -3,6 +3,7 @@ use std::io::Read;
 use nana_compiler::{
     nana,
     // Lexical
+    Flatten,
 };
 
 fn main() -> anyhow::Result<()> {
@@ -29,10 +30,12 @@ fn main() -> anyhow::Result<()> {
 fn parse_nana(code: &String) {
     let res = nana::NanaParser::new().parse(code);
     match res {
-        Ok(res) => {
-            println!("{:#?}", res);
+        Ok(nana) => {
+            // println!("{:#?}", nana);
             // let nana = res.lexical();
             // println!("{:#?}", nana);
+            let nana = nana.flatten();
+            println!("{:#?}", nana);
         }
         Err(e) => {
             println!("Error: {}", e);
