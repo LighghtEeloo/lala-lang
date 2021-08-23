@@ -70,10 +70,14 @@ mod construct {
             (Vec::new(), block).into()
         }
     }
-    /// Insert from last to first.
     impl From<(Vec<Binder>, Block)> for GatedBlock {
         fn from((traces, block): (Vec<Binder>, Block)) -> Self {
             Self { traces, block }
+        }
+    }
+    impl From<(Vec<Binder>, Expr)> for GatedBlock {
+        fn from((traces, expr): (Vec<Binder>, Expr)) -> Self {
+            (traces, Block::from(expr)).into()
         }
     }
 
@@ -84,7 +88,12 @@ mod construct {
     }
     impl From<Expr> for Block {
         fn from(e: Expr) -> Self {
-            Block::Tuple(Vec::new(), vec![e])
+            match e {
+                Expr::Block(blk) => blk,
+                _ => {
+                    Block::Tuple(Vec::new(), vec![e])
+                }
+            }
         }
     }
     impl From<GatedBlock> for Block {

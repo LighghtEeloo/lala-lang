@@ -66,10 +66,10 @@ Expr: Expr = {
     <GatedBlock> => Expr::GatedBlock(<>),
 };
 
-// Todo: Pattern; AtomExpr.
+// Todo: Pattern.
 GatedBlock: GatedBlock = {
-    "|" <args:Comma<Binder>> "|" <blk:Block> => {
-        (args, blk).into()
+    "|" <args:Comma<Binder>> "|" <expr:AtomExpr> => {
+        (args, expr).into()
     }
 };
 
