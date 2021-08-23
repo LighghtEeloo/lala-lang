@@ -83,6 +83,13 @@ curry := |a, b| (
 curry' := |a, b| (
     ((|| ( |c| (((1))))))
 );
+curry' () curry' curry'
+    "#),
+    format!("{}", r#"
+f | a b := (
+    |c| 1
+);
+f () f f
     "#),
     ]
 } 

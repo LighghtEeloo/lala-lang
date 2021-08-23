@@ -45,6 +45,12 @@ Abstraction: Abstraction = {
     <b:Binder> <br:Bridge> <e:Expr> ";" => {
         (b, br, e).into()
     },
+    <b:Binder> "|" <args:Binder+> <br:Bridge> <e:Expr> ";" => {
+        let e = Expr::GatedBlock(
+            GatedBlock::from((args, e))
+        );
+        (b, br, e).into()
+    },
 };
 
 Binder: Binder = {
@@ -77,6 +83,22 @@ AppExpr: Expr = {
     <AtomExpr>,
     <f:AppExpr> <a:AtomExpr> => 
         Expr::Application(Box::new(f), Box::new(a)),
+    // <mut es:AtomExpr+> => {
+    //     es.reverse();
+    //     loop {
+    //         let lhs = es.pop();
+    //         let rhs = es.pop();
+    //         match (lhs, rhs) {
+    //             (Some(f), Some(a)) => {
+    //                 es.push(Expr::Application(Box::new(f), Box::new(a)));
+    //             }
+    //             (Some(a), None) => {
+    //                 break a;
+    //             }
+    //             _ => panic!(),
+    //         }
+    //     }
+    // }
 };
 
 AtomExpr: Expr = {
