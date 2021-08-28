@@ -36,7 +36,7 @@ Each block corresponds to both a type of *data-structure* and a way of *computat
 In Nana, one may use:
 
 1. `(x, y, z)` as a tuple, which binds multiple values together. 
-2. `[i, j, k]` as a list, which both grants indices to list elements and an order.
+2. `[i, j, k]` as a list, which both grants indice to list elements and an order.
 3. `{}` as hashable.
     1. `{a:x, b:y, c:z}` as a hash-map, which creates a table of key-value pairs.
     2. `{a, b, c}` as a hash-set, which is unordered and unique.
@@ -45,14 +45,14 @@ which is quite close to one's intuition. See [Value Space](#value-space) for fur
 
 > Observation: 
 > 
-> Tuple may serve as a function input and output syntax. When applying a function in most languages, one can just treat it as passing a tuple to the function, which seems to be syntactically same.
+> Tuple may serve as a function input and output syntax. When applying a function in most languages, one can just treat it as passing a tuple to the function, which seems to be syntactically the same.
 > 
 > Both list and array serve as linear containers, but they are vastly different. To quickly index elements, one may use array; to easily insert and delete, one may use list; the problem is they are fighting for the same syntax. 
 > 
 > A hash-map can also be ordered by insertion, see Dictionary in Python 3.6+.
 > 
 
-However, Nana is more than just representing data. It also cares about reusing them. That's where bindings comes in as a remedy. In any block you may write bindings:
+However, Nana can do more than just representing data. It also cares about reusing them. That's where bindings comes in as a remedy. In any block you may write bindings:
 
 ```nana
 (
@@ -68,7 +68,7 @@ where `a` and `b` are binders. You may see them as "variables" or "functions". T
 (1, 2)
 ```
 
-Do note that every block is consist of a binder space and a value space, as shown above.
+Note that every block consists of a binder space and a value space, as shown above.
 
 ```nana
 (
@@ -78,7 +78,7 @@ Do note that every block is consist of a binder space and a value space, as show
 )
 ```
 
-In the example above we evaluated the block and retrived its value. But that's only half the story. The bindings are still kept for reuse during the hole compilation, which means:
+In the example above we evaluated the block and retrived its value. But that's only half the story. The bindings are still kept for reuse during the whole compilation process, which means:
 
 ```nana
 (
@@ -99,7 +99,7 @@ will be evaluated as
 
 Here in `tuple` we treat `a = 1; b = 2;` as binder space, and `a, b` as value space. The spaces will be treated differently according to the blocks it lies in. See [Binder Space](#binder-space) section for further explanation.
 
-Also all blocks can be "gated" and form a gated block. This is similar to the concept of "closure", or "lambda function". It provides a way to eject binders at the time of function application. Another hello world example is
+In addition, all blocks can be "gated" and form a gated block. This is similar to the concept of "closure", or "lambda function". It provides a way to eject binders at the time of function application. Another hello world example is
 
 ```nana
 (
@@ -115,7 +115,7 @@ Which leads to
 ```
 
 Some interesting comments:
-1. An empty gate is exactly the same as an ungated block (feel free to suprise).
+1. An empty gate is exactly the same as an ungated block (suprise!).
 ```nana
 (
     tuple := || (

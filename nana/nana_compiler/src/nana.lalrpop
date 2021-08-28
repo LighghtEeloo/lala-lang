@@ -25,9 +25,11 @@ Block: Block = {
     },
 };
 
+#[inline]
 BlockInner: (Vec<Abstraction>, Vec<Expr>) = {
     <bds:BinderSpace> <vls:ValueSpaceExpr> => (bds, vls),
 };
+#[inline]
 BlockInnerMap: (Vec<Abstraction>, Vec<Pair>) = {
     <bds:BinderSpace> <vls:ValueSpacePair> => (bds, vls),
 };
