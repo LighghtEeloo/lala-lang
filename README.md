@@ -1,14 +1,18 @@
 # Lala
-An expression oriented data notation, aimed at transpiling itself to any cascaded data notation.
+An expression-oriented data notation, aimed at transpiling itself to any cascaded data notation.
 
 Lala is separated into three components: `Nana`, `Lala`, and `Dada`.
 
+
+## Motivation
+
+Checkout [Motivation](docs/Motivation.md).
 
 <!-- ## Quick Examples -->
 
 <!-- ### Direct Tranpilation
 
-Some examples will be provided here as an introduction to lala.
+Some examples will be provided here as an introduction to Lala.
 
 - lala4html
 - lala4css
@@ -73,7 +77,7 @@ qsort [1,3,4,2,5]
     ~ gpa := 3.7;
 ];
 
-/* get value; of course it could be better abstracted */
+/* get value; of course, it could be better abstracted */
 {
     alice.name: {
         "study_status": alice.study,
@@ -141,7 +145,7 @@ Nana++.
 
 ### Dada
 
-A (fake) package manager in pure lala, designed more as a structural convention than a heavy building system.
+A (fake) package manager in pure Lala, designed more as a structural convention than a heavy building system.
 
 
 ## Current Progress
@@ -149,4 +153,4 @@ Using [lalrpop](https://github.com/lalrpop/lalrpop) as nana/lala's parser to Rus
 
 Currently dealing with symbol resolution.
 
-Also here is a [todo list](Todo.md).
+Also, here is a [todo list](docs/Todo.md).
