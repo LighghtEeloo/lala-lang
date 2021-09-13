@@ -44,23 +44,10 @@ Observation #1: The fact that what we traditionally defined as "data file" has l
 ## Scenario #2: Describing an FSM. Or simply, a chatbot.
 
 Recently, I'm writing a personal chatbot. The process is roughly like the following:
-
-```mermaid
-graph TD;
-A(start)
-B(show weather)
-C(show todo-list)
-D(ask for new todo entry)
-E(ask for notes to take)
-F(end)
-G(prompt error)
-H(prompt error)
-A --/weather--> B --> F
-A --/todo--> C  --> D --valid input---> E --valid input---> F
-A --/note--> E
-D --invalid input--> G --> D
-E --invalid input--> H --> E
-```
+<details open>
+<summary>Click to collapse</summary>
+<image src="./chatbot_graph.png" alt="Chatbot FSM graph" />
+</details>
 
 In the graph above, my idea and need are clearly stated; but when I put them down in my code (like python), the target language may not accept them gracefully. There exist at least three possible options:
 
