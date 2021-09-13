@@ -39,7 +39,7 @@ Consider three scenarios that could sound troublesome.
 
 The example above is a piece of a configuration file that I've just created in vs-code. You may have noticed the duplication: all tasks fall into the same pattern, yet I have no reasonable way to remove such duplication or, say, create a higher level of abstraction. Imagine how the configurations would pile up, and suddenly one day, you find yourself adding a new field to every single entry only because vs-code has updated its settings! (which has already happened to me, sadly)
 
-Observation #1: The fact that what we traditionally defined as "data file" has limited or no consideration of human-readable abstraction.
+Observation #1: What we traditionally defined as "data file" has limited or no consideration of human-readable abstraction.
 
 ## Scenario #2: Describing an FSM. Or simply, a chatbot.
 
@@ -49,7 +49,7 @@ Recently, I'm writing a personal chatbot. The process is roughly like the follow
 <image src="./chatbot_graph.png" alt="Chatbot FSM graph" />
 </details>
 
-In the graph above, my idea and need are clearly stated; but when I put them down in my code (like python), the target language may not accept them gracefully. There exist at least three possible options:
+In the graph above, my idea and needs are clearly stated; but when I put them down in my code (like python), the target language may not accept them gracefully. There exist at least three possible options:
 
 1. Use functions to capture the relation graph and write handlers over and over. It's hard to scale and, happy debugging :-)
 2. Write a "scheme" file that describes the graph above and later interprets it in the target language:
@@ -82,7 +82,7 @@ In the graph above, my idea and need are clearly stated; but when I put them dow
                     "interact": "!write_todo",
                     "step": {
                         "w_note": "@valid_todo",   // jumps to "w_note" (write) when input is valid
-                        "e_todo": "@invalid_todo"  // jumps to "e_note" (error) otherwise
+                        "e_todo": "@invalid_todo"  // jumps to "e_todo" (error) otherwise
                     }
                 },
                 "e_todo": {
@@ -100,6 +100,7 @@ In the graph above, my idea and need are clearly stated; but when I put them dow
     1. the scheme isn't covered by a type system; that is, even if you miss spelled some "keywords" (like "entrance" or "dialog"), you will not be reminded except for receiving a runtime error
     2. it takes effort to interpret the scheme in the target language
     3. even though the patterns are abstracted, it still possesses the flaw of a configuration file - limited means of abstraction
+   
     Though some shortcomings remain, the scheme file does present an abstraction that is scalable and maintainable. But we can still do better.
 3. Design your own DSL. Write a parser that processes your DSL right in your target language, and start interpreting it. Good luck.
 
