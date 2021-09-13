@@ -4,6 +4,8 @@ An expression oriented programming language / data notation, designed for elegan
 
 This is a proof-of-concept sub-language derived from Lala (or as a prelude).
 
+[TOC]
+
 ## Core Concepts
 
 All terms in `nana` will eventually converge to an expression.
@@ -643,3 +645,15 @@ The `undone` will not be evaluated because only `a` is required.
 
 
 ## Pattern Language
+
+
+## Type System
+
+Nana adopts duck typing. All expressions are first expanded to blocks, and the blocks will be typed by the following rules:
+
+1. If two blocks share the same fields, and
+2. For all fields the two blocks hold, if
+   1. either it's the same terminal type prefixed by `%`,
+   2. or it's the same type.
+
+
